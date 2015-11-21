@@ -1,0 +1,197 @@
+diff --git a/host.c b/host.c
+index 3be6c09..1b3e331 100644
+--- a/host.c
++++ b/host.c
+@@ -5,6 +5,7 @@
+ #define ENET_BUILDING_LIB 1
+ #include <string.h>
+ #include "enet/enet.h"
++#include <stdio.h>
+ 
+ /** @defgroup host ENet host functions
+     @{
+@@ -233,7 +234,7 @@ enet_host_connect (ENetHost * host, const ENetAddress * address, size_t channelC
+         
+     command.header.command = ENET_PROTOCOL_COMMAND_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+     command.header.channelID = 0xFF;
+-    command.connect.outgoingPeerID = ENET_HOST_TO_NET_16 (currentPeer -> incomingPeerID);
++    command.connect.outgoingPeerID = ENET_HOST_TO_NET_32 (currentPeer -> incomingPeerID);
+     command.connect.incomingSessionID = currentPeer -> incomingSessionID;
+     command.connect.outgoingSessionID = currentPeer -> outgoingSessionID;
+     command.connect.mtu = ENET_HOST_TO_NET_32 (currentPeer -> mtu);
+diff --git a/include/enet/enet.h b/include/enet/enet.h
+index 5e21ee8..4fd0a04 100644
+--- a/include/enet/enet.h
++++ b/include/enet/enet.h
+@@ -255,8 +255,8 @@ typedef struct _ENetPeer
+ { 
+    ENetListNode  dispatchList;
+    struct _ENetHost * host;
+-   enet_uint16   outgoingPeerID;
+-   enet_uint16   incomingPeerID;
++   enet_uint32   outgoingPeerID;
++   enet_uint32   incomingPeerID;
+    enet_uint32   connectID;
+    enet_uint8    outgoingSessionID;
+    enet_uint8    incomingSessionID;
+@@ -362,7 +362,7 @@ typedef struct _ENetHost
+    enet_uint32          randomSeed;
+    int                  recalculateBandwidthLimits;
+    ENetPeer *           peers;                       /**< array of peers allocated for this host */
+-   size_t               peerCount;                   /**< number of peers allocated for this host */
++   enet_uint32          peerCount;                   /**< number of peers allocated for this host */
+    size_t               channelLimit;                /**< maximum number of channels allowed for connected peers */
+    enet_uint32          serviceTime;
+    ENetList             dispatchQueue;
+@@ -384,9 +384,9 @@ typedef struct _ENetHost
+    enet_uint32          totalReceivedData;           /**< total data received, user should reset to 0 as needed to prevent overflow */
+    enet_uint32          totalReceivedPackets;        /**< total UDP packets received, user should reset to 0 as needed to prevent overflow */
+    ENetInterceptCallback intercept;                  /**< callback the user can set to intercept received raw UDP packets */
+-   size_t               connectedPeers;
+-   size_t               bandwidthLimitedPeers;
+-   size_t               duplicatePeers;              /**< optional number of allowed peers from duplicate IPs, defaults to ENET_PROTOCOL_MAXIMUM_PEER_ID */
++   enet_uint32          connectedPeers;
++   enet_uint32          bandwidthLimitedPeers;
++   enet_uint32          duplicatePeers;              /**< optional number of allowed peers from duplicate IPs, defaults to ENET_PROTOCOL_MAXIMUM_PEER_ID */
+    size_t               maximumPacketSize;           /**< the maximum allowable packet size that may be sent or received on a peer */
+    size_t               maximumWaitingData;          /**< the maximum aggregate amount of buffer space a peer may use waiting for packets to be delivered */
+ } ENetHost;
+diff --git a/include/enet/protocol.h b/include/enet/protocol.h
+index f8c73d8..bd64c2f 100644
+--- a/include/enet/protocol.h
++++ b/include/enet/protocol.h
+@@ -16,7 +16,7 @@ enum
+    ENET_PROTOCOL_MAXIMUM_WINDOW_SIZE     = 65536,
+    ENET_PROTOCOL_MINIMUM_CHANNEL_COUNT   = 1,
+    ENET_PROTOCOL_MAXIMUM_CHANNEL_COUNT   = 255,
+-   ENET_PROTOCOL_MAXIMUM_PEER_ID         = 0xFFF,
++   ENET_PROTOCOL_MAXIMUM_PEER_ID         = 0xFFFFFFF,
+    ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT  = 1024 * 1024
+ };
+ 
+@@ -50,7 +50,8 @@ typedef enum _ENetProtocolFlag
+    ENET_PROTOCOL_HEADER_FLAG_MASK       = ENET_PROTOCOL_HEADER_FLAG_COMPRESSED | ENET_PROTOCOL_HEADER_FLAG_SENT_TIME,
+ 
+    ENET_PROTOCOL_HEADER_SESSION_MASK    = (3 << 12),
+-   ENET_PROTOCOL_HEADER_SESSION_SHIFT   = 12
++   ENET_PROTOCOL_HEADER_SESSION_SHIFT   = 12,
++	 ENET_PROTOCOL_HIGH_PEER_ID_SHIFT = 16
+ } ENetProtocolFlag;
+ 
+ #ifdef _MSC_VER
+@@ -64,7 +65,7 @@ typedef enum _ENetProtocolFlag
+ 
+ typedef struct _ENetProtocolHeader
+ {
+-   enet_uint16 peerID;
++   enet_uint32 peerID;
+    enet_uint16 sentTime;
+ } ENET_PACKED ENetProtocolHeader;
+ 
+@@ -85,7 +86,7 @@ typedef struct _ENetProtocolAcknowledge
+ typedef struct _ENetProtocolConnect
+ {
+    ENetProtocolCommandHeader header;
+-   enet_uint16 outgoingPeerID;
++   enet_uint32 outgoingPeerID;
+    enet_uint8  incomingSessionID;
+    enet_uint8  outgoingSessionID;
+    enet_uint32 mtu;
+@@ -103,7 +104,7 @@ typedef struct _ENetProtocolConnect
+ typedef struct _ENetProtocolVerifyConnect
+ {
+    ENetProtocolCommandHeader header;
+-   enet_uint16 outgoingPeerID;
++   enet_uint32 outgoingPeerID;
+    enet_uint8  incomingSessionID;
+    enet_uint8  outgoingSessionID;
+    enet_uint32 mtu;
+diff --git a/peer.c b/peer.c
+index e2d0872..8a2ca89 100644
+--- a/peer.c
++++ b/peer.c
+@@ -5,6 +5,7 @@
+ #include <string.h>
+ #define ENET_BUILDING_LIB 1
+ #include "enet/enet.h"
++#include <stdio.h>
+ 
+ /** @defgroup peer ENet peer functions 
+     @{
+@@ -675,7 +676,7 @@ enet_peer_setup_outgoing_command (ENetPeer * peer, ENetOutgoingCommand * outgoin
+ 
+     if (outgoingCommand -> command.header.command & ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE)
+       enet_list_insert (enet_list_end (& peer -> outgoingReliableCommands), outgoingCommand);
+-    else
++		else
+       enet_list_insert (enet_list_end (& peer -> outgoingUnreliableCommands), outgoingCommand);
+ }
+ 
+diff --git a/protocol.c b/protocol.c
+index 29d6487..fc49da8 100644
+--- a/protocol.c
++++ b/protocol.c
+@@ -320,7 +320,7 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
+     peer -> state = ENET_PEER_STATE_ACKNOWLEDGING_CONNECT;
+     peer -> connectID = command -> connect.connectID;
+     peer -> address = host -> receivedAddress;
+-    peer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> connect.outgoingPeerID);
++    peer -> outgoingPeerID = ENET_NET_TO_HOST_32 (command -> connect.outgoingPeerID);
+     peer -> incomingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.incomingBandwidth);
+     peer -> outgoingBandwidth = ENET_NET_TO_HOST_32 (command -> connect.outgoingBandwidth);
+     peer -> packetThrottleInterval = ENET_NET_TO_HOST_32 (command -> connect.packetThrottleInterval);
+@@ -403,7 +403,7 @@ enet_protocol_handle_connect (ENetHost * host, ENetProtocolHeader * header, ENet
+ 
+     verifyCommand.header.command = ENET_PROTOCOL_COMMAND_VERIFY_CONNECT | ENET_PROTOCOL_COMMAND_FLAG_ACKNOWLEDGE;
+     verifyCommand.header.channelID = 0xFF;
+-    verifyCommand.verifyConnect.outgoingPeerID = ENET_HOST_TO_NET_16 (peer -> incomingPeerID);
++    verifyCommand.verifyConnect.outgoingPeerID = ENET_HOST_TO_NET_32 (peer -> incomingPeerID);
+     verifyCommand.verifyConnect.incomingSessionID = incomingSessionID;
+     verifyCommand.verifyConnect.outgoingSessionID = outgoingSessionID;
+     verifyCommand.verifyConnect.mtu = ENET_HOST_TO_NET_32 (peer -> mtu);
+@@ -941,7 +941,7 @@ enet_protocol_handle_verify_connect (ENetHost * host, ENetEvent * event, ENetPee
+     if (channelCount < peer -> channelCount)
+       peer -> channelCount = channelCount;
+ 
+-    peer -> outgoingPeerID = ENET_NET_TO_HOST_16 (command -> verifyConnect.outgoingPeerID);
++    peer -> outgoingPeerID = ENET_NET_TO_HOST_32 (command -> verifyConnect.outgoingPeerID);
+     peer -> incomingSessionID = command -> verifyConnect.incomingSessionID;
+     peer -> outgoingSessionID = command -> verifyConnect.outgoingSessionID;
+ 
+@@ -982,7 +982,9 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
+     ENetPeer * peer;
+     enet_uint8 * currentData;
+     size_t headerSize;
+-    enet_uint16 peerID, flags;
++    enet_uint32 peerID;
++		enet_uint16 highPeerID;
++		enet_uint16 flags;
+     enet_uint8 sessionID;
+ 
+     if (host -> receivedDataLength < (size_t) & ((ENetProtocolHeader *) 0) -> sentTime)
+@@ -990,10 +992,12 @@ enet_protocol_handle_incoming_commands (ENetHost * host, ENetEvent * event)
+ 
+     header = (ENetProtocolHeader *) host -> receivedData;
+ 
+-    peerID = ENET_NET_TO_HOST_16 (header -> peerID);
+-    sessionID = (peerID & ENET_PROTOCOL_HEADER_SESSION_MASK) >> ENET_PROTOCOL_HEADER_SESSION_SHIFT;
+-    flags = peerID & ENET_PROTOCOL_HEADER_FLAG_MASK;
+-    peerID &= ~ (ENET_PROTOCOL_HEADER_FLAG_MASK | ENET_PROTOCOL_HEADER_SESSION_MASK);
++    peerID = ENET_NET_TO_HOST_32 (header -> peerID);
++		highPeerID = (peerID >> ENET_PROTOCOL_HIGH_PEER_ID_SHIFT);
++    sessionID = (highPeerID & ENET_PROTOCOL_HEADER_SESSION_MASK) >> ENET_PROTOCOL_HEADER_SESSION_SHIFT;
++    flags = highPeerID & ENET_PROTOCOL_HEADER_FLAG_MASK;
++    peerID &= ~ ((ENET_PROTOCOL_HEADER_FLAG_MASK | ENET_PROTOCOL_HEADER_SESSION_MASK) << ENET_PROTOCOL_HIGH_PEER_ID_SHIFT);
++
+ 
+     headerSize = (flags & ENET_PROTOCOL_HEADER_FLAG_SENT_TIME ? sizeof (ENetProtocolHeader) : (size_t) & ((ENetProtocolHeader *) 0) -> sentTime);
+     if (host -> checksum != NULL)
+@@ -1704,7 +1708,7 @@ enet_protocol_send_outgoing_commands (ENetHost * host, ENetEvent * event, int ch
+ 
+         if (currentPeer -> outgoingPeerID < ENET_PROTOCOL_MAXIMUM_PEER_ID)
+           host -> headerFlags |= currentPeer -> outgoingSessionID << ENET_PROTOCOL_HEADER_SESSION_SHIFT;
+-        header -> peerID = ENET_HOST_TO_NET_16 (currentPeer -> outgoingPeerID | host -> headerFlags);
++        header -> peerID = ENET_HOST_TO_NET_32 (currentPeer -> outgoingPeerID | (host -> headerFlags << ENET_PROTOCOL_HIGH_PEER_ID_SHIFT));
+         if (host -> checksum != NULL)
+         {
+             enet_uint32 * checksum = (enet_uint32 *) & headerData [host -> buffers -> dataLength];

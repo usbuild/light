@@ -1,0 +1,27 @@
+#pragma once
+#include <algorithm>
+#include "core/service.h"
+#include "utils/logger.h"
+
+namespace light {
+	namespace service {
+
+		class LuaService : public light::core::Service {
+
+		public:
+			LuaService(light::core::Context &ctx);
+			~LuaService();
+
+			light::utils::ErrorCode install_new_handler(const std::string &file, const std::string &name, const std::string &args);
+
+			light::utils::ErrorCode init() override;
+
+			light::utils::ErrorCode  fini() override;
+
+			static const char* name;
+		private:
+			light::core::Context *ctx_;
+		};
+
+	} /* handler */
+} /* light */

@@ -1,0 +1,6 @@
+namespace light.proto;
+
+table ConnectRequest {
+my_id:short;
+need_back:bool;
+}
