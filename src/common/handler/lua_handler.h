@@ -1,4 +1,5 @@
 #pragma once
+#include "flatbuffers/flatbuffers.h"
 extern "C" {
 #include "lua.h"
 #include "lualib.h"
@@ -7,7 +8,6 @@ extern "C" {
 
 #include "core/message.h"
 #include "core/handler.h"
-#include "flatbuffers/flatbuffers.h"
 #include "utils/noncopyable.h"
 #include "utils/error_code.h"
 #include "utils/logger.h"
@@ -30,7 +30,7 @@ namespace light {
 				if (ctx == nullptr) return ctx;
 				ctx->l_ = luaL_newstate();
 				if (ctx->l_ == nullptr) {
-					LOG(ERROR) << "cannot create lua state: not enough memory";
+					LOG(FATAL) << "cannot create lua state: not enough memory";
 					return nullptr;
 				}
 				luaL_openlibs(ctx->l_);
@@ -58,7 +58,7 @@ namespace light {
 				}
 				register_core_functions();
 				if(luaL_dofile(lua_ctx_->L(), script_name_.c_str())) {
-					LOG(ERROR) << "Error while loading script: " << script_name_ << " " << lua_tostring(lua_ctx_->L(), -1);
+					LOG(FATAL) << "Error while loading script: " << script_name_ << " " << lua_tostring(lua_ctx_->L(), -1);
 					return LS_MISC_ERR_OBJ(unknown);
 				}
 				return LS_OK_ERROR();
@@ -78,26 +78,26 @@ namespace light {
 				};
 
 				if (!lua_getglobal(lua_ctx_->L(), "on_install")) {
-					LOG(ERROR) << "cannot find on_install";
+					LOG(FATAL) << "cannot find on_install";
 					return;
 				}
 				if (!lua_isfunction(lua_ctx_->L(), -1)) {
-					LOG(ERROR) << "cannot find on_install function";
+					LOG(FATAL) << "cannot find on_install function";
 					return;
 				}
 
 				lua_pushinteger(lua_ctx_->L(), get_id());
 				if (lua_pcall(lua_ctx_->L(), 1, 0, 0)) {
-					LOG(ERROR) << "error call install function " << lua_tostring(lua_ctx_->L(), -1);
+					LOG(FATAL) << "error call install function " << lua_tostring(lua_ctx_->L(), -1);
 				}
 
 				if (!lua_getglobal(lua_ctx_->L(), "on_message")) {
-					LOG(ERROR) << "cannot find on_message";
+					LOG(FATAL) << "cannot find on_message";
 					return;
 				}
 
 				if (!lua_isfunction(lua_ctx_->L(), -1)) {
-					LOG(ERROR) << "cannot find on_message function";
+					LOG(FATAL) << "cannot find on_message function";
 					return;
 				}
 

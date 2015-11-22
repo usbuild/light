@@ -1,8 +1,11 @@
 #include <assert.h>
 #include <vector>
 #include <deque>
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
 #include "network/connection.h"
+
 namespace light {
 	namespace network {
 		WriteBuffer::WriteBuffer(): write_queue_(), size_(0), write_vect_() {}
@@ -17,7 +20,7 @@ namespace light {
 			size_t current_size = 0;
 
 			for (auto &n : write_queue_) {
-				struct iovec v;
+				struct ::iovec v;
 				auto data_len = n.total_len - n.write_ptr;
 				if (current_size + data_len >= max_size) break;
 				v.iov_base = static_cast<char*>(n.buffer) + n.write_ptr;
@@ -43,6 +46,11 @@ namespace light {
 				}
 			}
 			write_queue_.erase(write_queue_.begin(), last_it);
+			if (write_queue_.begin() == write_queue_.end())
+			{
+				size_ = 0;
+				return;
+			}
 			write_queue_.begin()->write_ptr += len - removed_len;
 			size_ -= len;
 		}

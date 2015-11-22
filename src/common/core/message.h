@@ -51,7 +51,8 @@ namespace light {
 				to = 0;
 				type = 0;
 				data = nullptr;
-				destroy = 0;
+			
+				destroy = nullptr;
 			}
 		};
 		typedef std::shared_ptr<LightMessage> light_message_ptr_t;

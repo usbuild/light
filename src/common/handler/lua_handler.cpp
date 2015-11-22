@@ -1,8 +1,6 @@
+#include "proto/station_generated.h"
 #include "core/context.h"
 #include "handler/lua_handler.h"
-//test
-#include "proto/station_generated.h"
-//test
 namespace light {
 	namespace handler {
 

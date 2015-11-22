@@ -1,5 +1,5 @@
 #pragma once
-#ifdef HAVE_EPOLL
+#ifdef HAVE_EPOLL_H
 #include <sys/epoll.h>
 #include "network/poller.h"
 #include "network/epoll_poller.h"

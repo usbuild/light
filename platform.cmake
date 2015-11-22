@@ -6,16 +6,21 @@ INCLUDE(CheckTypeSize)
 INCLUDE(CheckCSourceCompiles)
 INCLUDE(CheckCXXSourceCompiles)
 
-CHECK_CXX_SOURCE_COMPILES (
-	"extern thread_local int x;
-	thread_local int * ptr = 0;
-	int foo() { ptr = &x; return x; }
-	thread_local int x = 1;
 
-	int main()
+CHECK_TYPE_SIZE(size_t SIZEOF_SIZE_T)
+IF (NOT SIZEOF_SIZE_T)
+	ADD_DEFINITIONS(-Dsize_t=unsigned int)
+ENDIF()
+CHECK_TYPE_SIZE(ssize_t SIZEOF_SSIZE_T)
+IF (NOT SIZEOF_SSIZE_T)
+ADD_DEFINITIONS(-Dssize_t=int)
+ENDIF()
+
+
+CHECK_CXX_SOURCE_COMPILES (
+	"int main()
 	{
-	x = 2;
-	foo();
+	static thread_local int i;
 	return 0;
 	}"
 	HAVE_CXX11_THREAD_LOCAL
@@ -23,15 +28,9 @@ CHECK_CXX_SOURCE_COMPILES (
 
 IF (NOT HAVE_CXX11_THREAD_LOCAL)
 	CHECK_CXX_SOURCE_COMPILES (
-		"extern __thread int x;
-		__thread int * ptr = 0;
-		int foo() { ptr = &x; return x; }
-		__thread int x = 1;
-
-		int main()
+		"int main()
 		{
-		x = 2;
-		foo();
+		static __thread int i;
 		return 0;
 		}"
 		HAVE_GNU_THREAD_LOCAL
@@ -43,21 +42,23 @@ IF (NOT HAVE_CXX11_THREAD_LOCAL AND NOTHAVE_GNU_THREAD_LOCAL)
 	MESSAGE (FATAL_ERROR "you compiler doesn't support thread_local or thread")
 ENDIF()
 
-CHECK_INCLUDE_FILES("sys/epoll.h" HAVE_EPOLL)
-IF (HAVE_EPOLL)
-	ADD_DEFINITIONS(-DHAVE_EPOLL)
-ENDIF()
+CHECK_INCLUDE_FILES("sys/epoll.h" HAVE_EPOLL_H)
 CHECK_INCLUDE_FILES("sys/timerfd.h" HAVE_TIMERFD)
-IF (HAVE_TIMERFD)
-	ADD_DEFINITIONS(-DHAVE_TIMERFD)
-ENDIF ()
 CHECK_INCLUDE_FILES("sys/eventfd.h" HAVE_EVENTFD)
-IF (HAVE_EVENTFD)
-	ADD_DEFINITIONS(-DHAVE_EVENTFD)
+CHECK_INCLUDE_FILES("sys/event.h" HAVE_KQUEUE_H)
+
+CHECK_INCLUDE_FILES(unistd.h HAVE_UNISTD_H)
+CHECK_INCLUDE_FILES(netdb.h HAVE_NETDB_H)
+CHECK_INCLUDE_FILES(arpa/inet.h HAVE_ARPA_INET_H)
+CHECK_INCLUDE_FILES(netinet/in.h HAVE_NETINET_IN_H)
+CHECK_INCLUDE_FILES(sys/uio.h HAVE_SYS_UIO_H)
+CHECK_INCLUDE_FILES(sys/time.h HAVE_SYS_TIME_H)
+CHECK_INCLUDE_FILES(WinSock2.h HAVE_WIN_SOCK2_H)
+CHECK_INCLUDE_FILES(sys/socket.h HAVE_SYS_SOCKET_H)
+IF(HAVE_WIN_SOCK2_H)
+ADD_DEFINITIONS(-DHAVE_WIN_SOCK2_H=1)
 ENDIF()
-
-CHECK_INCLUDE_FILES("sys/event.h" HAVE_KQUEUE)
-
-IF (HAVE_KQUEUE)
-	ADD_DEFINITIONS(-DHAVE_KQUEUE)
+CHECK_INCLUDE_FILES(WS2tcpip.h HAVE_WS2_TCPIP_H)
+IF(HAVE_WS2_TCPIP_H)
+ADD_DEFINITIONS(-DHAVE_WS2_TCPIP_H=1)
 ENDIF()

@@ -1,13 +1,33 @@
 #pragma once
 
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+
+#ifdef HAVE_WIN_SOCK2_H
+#include <WinSock2.h>
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+#endif
+#ifdef HAVE_WS2_TCPIP_H
+#include <WS2tcpip.h>
+#endif
+
 #include <memory>
 #include <stdint.h>
 #include <string>
 #include "utils/error_code.h"
 #include "utils/exception.h"
 #include "utils/noncopyable.h"
+#include "utils/platform.h"
 
 namespace light {
 	namespace network {
@@ -56,7 +76,7 @@ namespace light {
 
 			light::utils::ErrorCode parse_from_ip_port(const std::string& ip, int port);
 
-			std::string to_string() const { return std::string(inet_ntoa(addr4_.sin_addr)); }
+			std::string to_string() const { return std::string(::inet_ntoa(addr4_.sin_addr)); }
 
 			socklen_t get_socklen() const { return sizeof(addr4_); }
 

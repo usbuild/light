@@ -3,30 +3,48 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8 FATAL_ERROR)
 OPTION (test "Build all tests." ON)
 OPTION (debug "enable debug." ON)
 OPTION (strict "enable strict check." ON)
+CMAKE_POLICY (SET CMP0054 OLD)
 
 PROJECT (lightserver CXX C)
 
 FILE (GLOB lightserver_lib_SRC "src/common/**/*.h" "src/common/**/*.cpp")
 
+IF(NOT WIN32)
 SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Werror -Wno-unused -Wextra")
 
 SET(STRICT_CXX_FLAGS "-Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self \
 											-Wmissing-declarations -Woverloaded-virtual \
 											-Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wswitch-default -Wundef \
 											-Wpointer-arith -Wcast-qual -pedantic")
-
+ENDIF()
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 	SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -stdlib=libc++")
 ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -Wlogical-op -Wnoexcept -Wstrict-null-sentinel -Wuninitialized")
+ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	SET(BUILD_SHARED_LIBS OFF)
+	SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+	SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
+	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRTD.lib")
+	SET(STRICT_CXX_FLAGS "/nologo")
+ELSE()
+
 ENDIF ()
 
 IF (debug)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
-	SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
+	IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+		SET(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Zi /Od")
+		SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Zi /Od")
+	ELSE()
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+		SET(CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -rdynamic")
+	ENDIF()
 ELSE()
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
+	IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	ELSE()
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG")
+	ENDIF()
 ENDIF ()
 
 #platform check
@@ -72,7 +90,13 @@ IF (strict AND debug)
 ENDIF ()
 
 ADD_DEPENDENCIES(lightserver_common ${LIB_DEP})
-TARGET_LINK_LIBRARIES (lightserver_common lua dl)
+
+IF(NOT WIN32)
+SET(COMMLIB dl)
+ELSE()
+SET(COMMLIB Ws2_32 WINMM)
+ENDIF()
+TARGET_LINK_LIBRARIES (lightserver_common lua ${COMMLIB})
 
 INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/src/common")
 

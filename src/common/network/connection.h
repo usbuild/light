@@ -3,6 +3,8 @@
 #include <memory>
 #include <stdint.h>
 #include <vector>
+#include "utils/platform.h"
+
 namespace light {
 	namespace network {
 

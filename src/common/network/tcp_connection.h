@@ -1,6 +1,8 @@
 #pragma once
 #include <deque>
+#ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>
+#endif
 #include <stdint.h>
 #include "network/connection.h"
 #include "network/dispatcher.h"
@@ -64,14 +66,19 @@ namespace light {
 					assert(bytes_to_read > bytes_has_read_);
 
 					size_t bytes_left = bytes_to_read - bytes_has_read_;
-					ssize_t read_bytes = ::read(this->sockfd_, static_cast<char*>(read_buf) + bytes_has_read_ , bytes_left);
+					ssize_t read_bytes = ::recv(this->sockfd_, static_cast<char*>(read_buf) + bytes_has_read_ , bytes_left, 0);
 					if (read_bytes < 0) {
 						if (errno == EAGAIN || errno == EWOULDBLOCK) {
 
 						} else {
 							LOG(WARNING) << "read failed: " << LS_GENERIC_ERROR(errno).message();
 						}
-					} else {
+					}
+					else if (read_bytes == 0)
+					{
+						dispatcher_->disable_read();
+					}
+					else {
 						bytes_has_read_ += read_bytes;
 						if (bytes_has_read_ == bytes_to_read) {
 							dispatcher_->disable_read();
@@ -87,7 +94,7 @@ namespace light {
 				dispatcher_->enable_read();
 
 				dispatcher_->set_read_callback([this, read_buf, buf_len, cb]{
-					ssize_t read_bytes = ::read(this->sockfd_, read_buf, buf_len);
+					ssize_t read_bytes = ::recv(this->sockfd_, static_cast<char*>(read_buf), buf_len, 0);
 					dispatcher_->disable_read();
 					if (read_bytes < 0) {
 						cb(LS_GENERIC_ERROR(errno), 0);

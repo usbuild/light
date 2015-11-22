@@ -1,10 +1,19 @@
 #pragma once
 
-#include <arpa/inet.h>
 #include <memory>
-#include <netinet/in.h>
+
 #include <string>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+
+#ifdef HAVE_WIN_SOCK2_H
+#include <WinSock2.h>
+#endif
+#ifdef HAVE_WS2_TCPIP_H
+#include <ws2tcpip.h>
+#endif
 #include "utils/error_code.h"
 #include "utils/logger.h"
 #include "utils/helpers.h"

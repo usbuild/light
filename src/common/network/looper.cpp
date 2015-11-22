@@ -11,8 +11,12 @@ namespace light {
 					bool commit = false;
 					SCOPE_EXIT([&eventfd, &timerfd, &commit]{
 						if (!commit) {
+#ifdef HAVE_TIMERFD
 							if (eventfd > 0) ::close(eventfd);
+#endif
+#ifdef HAVE_EVENTFD
 							if (timerfd > 0) ::close(timerfd);
+#endif
 						}
 						});
 
@@ -43,7 +47,7 @@ namespace light {
 							throw light::exception::EventException(LS_GENERIC_ERROR(errno));
 						}
 					event_dispatcher_.reset(new Dispatcher(*this, eventfd));
-#else
+#elif defined(HAVE_UNISTD_H)
 					int pipes[2];
 					if (::pipe(pipes) == -1) {
 							throw light::exception::EventException(LS_GENERIC_ERROR(errno));
@@ -57,7 +61,7 @@ namespace light {
 					event_dispatcher_.reset(new Dispatcher(*this, pipes[0]));
 					w_event_dispatcher_.reset(new Dispatcher(*this, pipes[1]));
 					eventfd = pipes[0];
-#endif
+
 					ec = event_dispatcher_->attach();
 					if (!ec.ok()) throw light::exception::EventException(ec);
 
@@ -66,7 +70,7 @@ namespace light {
 					
 					event_dispatcher_->set_read_callback([eventfd, this]{
 							char buf[128];
-							int read_cnt = ::read(eventfd, buf, 128);
+							::recv(eventfd, buf, 128, 0);
 						});
 
 					this->add_timer(ec, 1000, 1000, [this]{
@@ -74,7 +78,7 @@ namespace light {
 									kv.second();
 								}
 							});
-
+#endif
 					commit = true;
 				}
 
@@ -177,7 +181,6 @@ namespace light {
 #ifndef HAVE_TIMERFD
 						tick_timer();
 #endif
-
 						for (auto &kv : valid_dispatchers_) {
 							Dispatcher *disp = kv.second;
 							post_functors_.push_back([disp](){disp->handle_events();});
@@ -214,7 +217,7 @@ namespace light {
 						std::unique_lock<std::mutex> plk(post_functor_lock_);
 						// handle unsafe post functors
 						if (!post_functors_.empty()) {
-							int slice_count = std::max(post_functors_.size() / std::thread::hardware_concurrency(), static_cast<size_t>(1));
+							int slice_count = (std::max)(post_functors_.size() / std::thread::hardware_concurrency(), static_cast<size_t>(1));
 							std::vector<functor> vec;
 							for (int i = 0; i < slice_count; ++i) {
 								if (post_functors_.empty()) break;

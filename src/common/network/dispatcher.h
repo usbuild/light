@@ -3,7 +3,10 @@
 #include <vector>
 #include <memory>
 #include <map>
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "network/socket.h"
 #include "utils/error_code.h"

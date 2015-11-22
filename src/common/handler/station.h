@@ -1,9 +1,10 @@
+#include "flatbuffers/flatbuffers.h"
 #include <algorithm>
 #include "core/handler.h"
 #include "network/endpoint.h"
 #include "service/network_service.h"
 #include "utils/buffer.h"
-#include "flatbuffers/flatbuffers.h"
+
 namespace light {
 	namespace handler {
 
@@ -15,7 +16,7 @@ namespace light {
 		struct PartialPacketMessage {
 			union{
 				light::core::PackedMessage pm;
-				char buf[sizeof(pm)];
+				char buf[sizeof(light::core::PackedMessage)];
 			};
 			char *data = nullptr;
 			uint32_t read_size = 0;
@@ -36,7 +37,7 @@ namespace light {
 			size_t input_buffer(char *buffer, size_t len) {
 				size_t consumed = 0;
 				if (!header_ready()) {
-					consumed = std::min(len, need_header_size());
+					consumed = (std::min)(len, need_header_size());
 					::memcpy(buf + read_size, buffer, consumed);
 					read_size += consumed;
 					if (read_size == sizeof(pm)) {
@@ -46,7 +47,7 @@ namespace light {
 				}
 				if (!header_ready()) return consumed;
 
-				size_t data_read = std::min(static_cast<size_t>(pm.size - read_size), len - consumed);
+				size_t data_read = (std::min)(static_cast<size_t>(pm.size - read_size), len - consumed);
 				::memcpy(data + read_size, buffer + consumed, data_read);
 				read_size += data_read;
 				return consumed;

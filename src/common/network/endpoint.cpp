@@ -68,7 +68,8 @@ namespace light {
 
 		std::string INetEndPointIpV6::to_string() const {
 			char buf[INET6_ADDRSTRLEN] = {0};
-			inet_ntop(AF_INET6, &(addr6_.sin6_addr), buf, INET6_ADDRSTRLEN);
+			auto addr = addr6_.sin6_addr;
+			::inet_ntop(AF_INET6, &addr, buf, INET6_ADDRSTRLEN);
 			return std::string(buf);
 		}
 

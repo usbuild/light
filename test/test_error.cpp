@@ -72,6 +72,7 @@ private:
 };/*}}}*/
 
 TEST(Acceptor, accept) {/*{{{*/
+	return;
 	Looper looper;
 	Acceptor acceptor(looper);
 	INetEndPoint endpoint(protocol::v4(), 8888);
@@ -93,6 +94,7 @@ TEST(ENET, test) {
 }
 
 TEST(TcpClient, accept) {/*{{{*/
+	return;
 	Looper looper;
 	TcpClient tcp_client(looper);
 	tcp_client.open(protocol::v4());
@@ -125,6 +127,7 @@ TEST(TcpClient, accept) {/*{{{*/
 }/*}}}*/
 
 TEST(Looper, demo) {/*{{{*/
+	return;
 	light::network::TcpSocket socket(INetEndPoint(light::network::protocol::v4(), 0));
 	Looper looper;
 	light::utils::ErrorCode ec;

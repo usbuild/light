@@ -38,7 +38,7 @@ namespace light {
 
 			light::utils::ErrorCode NetworkService::init() {
 				if (enet_initialize() != 0) {
-					DLOG(ERROR) << "An error occured while initializing ENet";
+					DLOG(FATAL) << "An error occured while initializing ENet";
 					return LS_MISC_ERR_OBJ(unknown);
 				}
 				loop_idx_ = get_looper().register_loop_callback(std::bind(&NetworkService::on_loop, this));
@@ -353,7 +353,7 @@ namespace light {
 				uintptr_t tid = get_looper().add_timer(ec, micro_sec, 0, [peer, this](){
 					auto it = connect_callbacks_.find(peer);
 					if (it == connect_callbacks_.end()) {
-						DLOG(ERROR) << "peer not found!! " << peer;
+						DLOG(FATAL) << "peer not found!! " << peer;
 						return;
 					}
 					enet_peer_reset(peer);
@@ -426,8 +426,8 @@ namespace light {
 			 * @param reliable 是否是可靠的包，仅针对UDP
 			 */
 			void NetworkService::send_common_packet(const CommonPacket &packet, bool reliable, int channel) {/*{{{*/
-				if (not check_handle_exists(packet.handle)) {
-					DLOG(ERROR) << "handle not exists handle_id: " << packet.handle;
+				if (!check_handle_exists(packet.handle)) {
+					DLOG(FATAL) << "handle not exists handle_id: " << packet.handle;
 					return;
 				}
 
@@ -457,7 +457,7 @@ namespace light {
 						}
 						break;
 					default:
-						DLOG(ERROR) << "apply send packet to wrong socket type";
+						DLOG(FATAL) << "apply send packet to wrong socket type";
 						break;
 				}
 			}/*}}}*/

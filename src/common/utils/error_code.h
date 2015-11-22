@@ -5,7 +5,16 @@ extern "C" {
 }
 #include <string>
 #include <string.h>
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+
+#ifdef WIN32
+//#define errno 
+#define ERRNO(x) (WSA##x)
+#else
+#define ERRNO(x) (x)
+#endif
 #include "utils/noncopyable.h"
 
 namespace light {
@@ -92,7 +101,6 @@ namespace light {
 				resource_deadlock_would_occur = EDEADLK,
 				resource_unavailable_try_again = EAGAIN,
 				result_out_of_range = ERANGE,
-				shut_down = ESHUTDOWN,
 				state_not_recoverable = ENOTRECOVERABLE,
 				stream_timeout = ETIME,
 				success = 0,
@@ -106,14 +114,6 @@ namespace light {
 				value_too_large = EOVERFLOW,
 				would_block = EWOULDBLOCK,
 				wrong_protocol_type = EPROTOTYPE,
-
-				host_not_found = HOST_NOT_FOUND,
-				host_not_found_try_again = TRY_AGAIN,
-				no_data = NO_DATA,
-				no_recovery = NO_RECOVERY,
-
-				service_not_found = EAI_SERVICE,
-				socket_type_not_supported = EAI_SOCKTYPE
 
 			};/*}}}*/
 		}

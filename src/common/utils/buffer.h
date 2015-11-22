@@ -27,7 +27,7 @@ namespace light {
 				if (capacity_ == 0) {
 					this->resize(len);
 				} else if (capacity_ < len_ + len) {
-					this->resize(std::max(len_ + len, static_cast<size_t>(capacity_ * 1.5)));
+					this->resize((std::max)(len_ + len, static_cast<size_t>(capacity_ * 1.5)));
 				}
 				memcpy(static_cast<char*>(this->data_) + len_, data, len);
 				len_ += len;

@@ -1,5 +1,5 @@
 #pragma once
-#ifdef HAVE_KQUEUE_H
+#if !defined(HAVE_EPOLL_H) && !defined(HAVE_KQUEUE_H)
 
 #include "network/poller.h"
 #include "utils/helpers.h"
@@ -9,11 +9,11 @@ namespace light {
 
 #define MAX_LOOPER_EVENTS 20
 
-		class KqueuePoller : public Poller {
+		class SelectPoller : public Poller {
 		public:
-			KqueuePoller(Looper &looper);
+			SelectPoller(Looper &looper);
 
-			virtual ~KqueuePoller();
+			virtual ~SelectPoller();
 
 			light::utils::ErrorCode poll(int timeout, std::unordered_map<int, Dispatcher*> &active_dispatchers);
 			
@@ -24,7 +24,9 @@ namespace light {
 			light::utils::ErrorCode update_dispatcher(Dispatcher &dispatcher);
 
 		private:
-			int kqueuefd_;
+			FD_SET readfds_;
+			FD_SET writefds_;
+			FD_SET errorfds_;
 		};
 		
 	} /* network */

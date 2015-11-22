@@ -1,17 +1,21 @@
 #include "network/poller.h"
 #include "network/epoll_poller.h"
 #include "network/kqueue_poller.h"
+#include "network/select_poller.h"
 namespace light {
 	namespace network {
 		Poller::~Poller() {}
 
 		Poller* Poller::create_default_poller(Looper &looper) {
-#ifdef HAVE_EPOLL
+
+#ifdef HAVE_EPOLL_H
 			return new EpollPoller(looper);
-#endif
-#ifdef HAVE_KQUEUE
+#elif defined(HAVE_KQUEUE_H)
 			return new KqueuePoller(looper);
+#else
+			return new SelectPoller(looper);
 #endif
+
 		}
 
 		bool Poller::has_dispathcer(const Dispatcher &dispatcher) const {

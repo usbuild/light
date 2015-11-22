@@ -1,7 +1,11 @@
 #include <gtest/gtest.h>
+#include <network/socket.h>
 
 int main(int argc, char **argv)
 {
+	light::utils::SocketGlobalInitialize();
 	::testing::InitGoogleTest(&argc, argv);
-	return RUN_ALL_TESTS();
+	int ret = RUN_ALL_TESTS();
+	light::utils::SocketGlobalFinitialize();
+	return ret;
 }

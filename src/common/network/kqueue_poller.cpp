@@ -1,4 +1,4 @@
-#ifdef HAVE_KQUEUE
+#ifdef HAVE_KQUEUE_H
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -25,7 +25,7 @@ namespace light {
 
 			struct timespec spec;
 			spec.tv_sec = timeout / 1000;
-			spec.tv_nsec = timeout / 1000 * 1000000LL;
+			spec.tv_nsec = timeout % 1000 * 1000000LL;
 			int num_events = ::kevent(kqueuefd_, NULL, 0, ev, MAX_LOOPER_EVENTS, &spec);
 
 			if (num_events < 0) {

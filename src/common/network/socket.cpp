@@ -1,12 +1,20 @@
 #include "network/socket.h"
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include <errno.h>
 #include <fcntl.h>
 #include <memory>
 #include <mutex>
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
 #include <sys/types.h>
 #include <stdlib.h>
 #include <string.h>
@@ -69,7 +77,7 @@ light::utils::ErrorCode SocketOps::listen(int fd, int backlog/*=5*/) const {
 light::utils::ErrorCode SocketOps::close(int &fd) const {
 	light::utils::ErrorCode ec;
 	if (!fd) return ec;
-	if (::close(fd) != 0) {
+	if (socketclose(fd) != 0) {
 		ec = errno;
 	} else {
 		fd = 0;
@@ -146,7 +154,11 @@ light::utils::ErrorCode Socket::set_nonblocking() {
 
 light::utils::ErrorCode Socket::set_reuseaddr(int enable) {
 	light::utils::ErrorCode ec;
+#ifdef WIN32
+	const char optval = static_cast<char>(enable);
+#else
 	int optval = enable;
+#endif
 	if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) != 0) {
 		ec = errno;
 	}
@@ -154,14 +166,14 @@ light::utils::ErrorCode Socket::set_reuseaddr(int enable) {
 }
 ssize_t Socket::write(light::utils::ErrorCode &ec, const void *buf, size_t len, int flags) {
 	errno = 0;
-	ssize_t s = ::send(this->sockfd_, buf, len, flags);
+	ssize_t s = ::send(this->sockfd_, static_cast<const char*>(buf), len, flags);
 	ec = LS_GENERIC_ERROR(errno);
 	return s;
 }
 
 ssize_t Socket::read(light::utils::ErrorCode &ec, void *buf, size_t len, int flags) {
 	errno = 0;
-	ssize_t s = ::recv(this->sockfd_, buf, len, flags);
+	ssize_t s = ::recv(this->sockfd_, static_cast<char*>(buf), len, flags);
 	ec = LS_GENERIC_ERROR(errno);
 	return s;
 }
@@ -198,7 +210,6 @@ light::utils::ErrorCode TcpSocket::accept(TcpSocket& client_socket) {
 }
 light::utils::ErrorCode TcpSocket::accept(int& fd) {
 	light::utils::ErrorCode ec;
-	socklen_t socklen;
 	int ret = ::accept(this->sockfd_, nullptr, nullptr);
 	if (ret <= 0) {
 		ec = LS_GENERIC_ERROR(errno);
@@ -209,7 +220,11 @@ light::utils::ErrorCode TcpSocket::accept(int& fd) {
 }
 light::utils::ErrorCode TcpSocket::set_keepalive() {
 	light::utils::ErrorCode ec;
-	int optval;
+#ifdef WIN32
+	char optval = 1;
+#else
+	int optval = 1;
+#endif
 	if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval)) != 0) {
 		ec = errno;
 	}

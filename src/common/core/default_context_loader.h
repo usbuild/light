@@ -24,7 +24,7 @@ namespace light {
 					}
 					auto ec = t->init();
 					if (!ec.ok()) {
-						DLOG(ERROR) << "handler init failed: " << ec.message();
+						DLOG(FATAL) << "handler init failed: " << ec.message();
 						return nullptr;
 					}
 					mh.reset(t);
@@ -49,7 +49,7 @@ namespace light {
 					}
 					auto ec = t->init();
 					if (!ec.ok()) {
-						DLOG(ERROR) << "handler init failed: " << ec.message();
+						DLOG(FATAL) << "handler init failed: " << ec.message();
 						return nullptr;
 					}
 					svc.reset(t);

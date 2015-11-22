@@ -12,7 +12,7 @@ namespace light {
 
 		void Context::uninstall_handler(mq_handler_id_t id) {
 			if (!mq_->has_callback(id)) {
-				LOG(ERROR) << "try to uninstall a nonexist module";
+				LOG(FATAL) << "try to uninstall a nonexist module";
 			} else {
 				mq_->unregister_callback(id);
 			}

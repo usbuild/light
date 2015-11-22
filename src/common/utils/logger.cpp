@@ -1,8 +1,11 @@
 #include "utils/logger.h"
 #include <stdio.h>
 #include <time.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <string.h>
+#include <network/timer.h>
 
 namespace light {
 	namespace utils {
@@ -14,11 +17,12 @@ namespace light {
 		const char* LocalLoggerProxy::get_time_str() {
 			static thread_local char t_buff[32];
 			memset(t_buff, 0, 32);
-			struct timeval tv;
-			gettimeofday(&tv, nullptr);
-			struct tm *tm = localtime(&tv.tv_sec);
+			uint64_t stamp = get_timestamp();
+			int64_t sec = stamp / 1000000;
+			int64_t usec = stamp % 1000000;
+			struct tm *tm = localtime(&sec);
 			int len = strftime(t_buff, sizeof(t_buff), "%m/%d/%y %H:%M:%S", tm);
-			snprintf(&t_buff[len], 32 - len, ".%ld", static_cast<long>(tv.tv_usec));
+			snprintf(&t_buff[len], 32 - len, ".%ld", static_cast<long>(usec));
 			return t_buff;
 		}
 

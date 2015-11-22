@@ -10,7 +10,7 @@ enum {
 	DEBUG = 1,
 	INFO,
 	WARNING,
-	ERROR
+	FATAL
 };
 
 namespace light {

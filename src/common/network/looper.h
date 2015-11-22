@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <mutex>
 #include <list>
+#include <stdio.h>
 #ifdef HAVE_EVENTFD
 #include <sys/eventfd.h>
 #endif
@@ -115,11 +116,11 @@ namespace light {
 			template<typename FUNC, typename... ARGS>
 				void strand_post(int strand_id, FUNC func, ARGS&&... args) {
 					lock_guard_t lock(post_functor_lock_);
-					uint64_t data = 1;
+					char data = 1;
 #ifdef HAVE_EVENTFD
-					int ret = ::write(event_dispatcher_->get_fd(), &data, sizeof data);
-#else
-					int ret = ::write(w_event_dispatcher_->get_fd(), &data, sizeof data);
+					int ret = ::send(event_dispatcher_->get_fd(), &data, sizeof data, 0);
+#elif defined(HAVE_UNISTD_H)
+					int ret = ::send(w_event_dispatcher_->get_fd(), &data, sizeof data, 0);
 #endif
 					if (strand_id) {
 						unique_post_functors_[strand_id].push_back(std::bind(func, std::forward<ARGS>(args)...));

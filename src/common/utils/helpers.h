@@ -6,8 +6,6 @@
 namespace light {
 	namespace utils {
 		int set_nonblocking(int fd);
-		int set_fd_option(int fd, int option);
-		int unset_fd_option(int fd, int option);
 
 		light::utils::ErrorCode check_socket_error(int fd);
 
@@ -22,12 +20,15 @@ namespace light {
 
 		template<typename T> struct icast_identity { typedef T type; };
 
+		int SocketGlobalInitialize();
+		void SocketGlobalFinitialize();
 	} /* utils */
 
 	template <typename T>
 		inline T implicit_cast (typename light::utils::icast_identity<T>::type x) {
 			return x;
 		}
+
 } /* light */
 
 
