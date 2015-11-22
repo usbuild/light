@@ -1,4 +1,5 @@
 #pragma once
+#include "config.h"
 #include <iostream>
 #include <sstream>
 #include <time.h>

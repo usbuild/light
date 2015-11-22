@@ -1,3 +1,4 @@
+#include "config.h"
 #ifdef HAVE_KQUEUE_H
 
 #include <sys/types.h>

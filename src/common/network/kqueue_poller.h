@@ -1,4 +1,5 @@
 #pragma once
+#include "config.h"
 #ifdef HAVE_KQUEUE_H
 
 #include "network/poller.h"

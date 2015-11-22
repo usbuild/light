@@ -1,3 +1,4 @@
+#include "config.h"
 #include <assert.h>
 #include <vector>
 #include <deque>
@@ -20,7 +21,7 @@ namespace light {
 			size_t current_size = 0;
 
 			for (auto &n : write_queue_) {
-				struct ::iovec v;
+				struct iovec v;
 				auto data_len = n.total_len - n.write_ptr;
 				if (current_size + data_len >= max_size) break;
 				v.iov_base = static_cast<char*>(n.buffer) + n.write_ptr;

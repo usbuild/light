@@ -1,0 +1,16 @@
+#pragma once
+#cmakedefine HAVE_EPOLL_H 1
+#cmakedefine HAVE_TIMERFD 1
+#cmakedefine HAVE_EVENTFD 1
+#cmakedefine HAVE_KQUEUE_H 1
+
+#cmakedefine HAVE_UNISTD_H 1
+#cmakedefine HAVE_NETDB_H 1
+#cmakedefine HAVE_ARPA_INET_H 1
+#cmakedefine HAVE_NETINET_IN_H 1
+#cmakedefine HAVE_SYS_UIO_H 1
+#cmakedefine HAVE_SYS_TIME_H 1
+#cmakedefine HAVE_WIN_SOCK2_H 1
+#cmakedefine HAVE_SYS_SOCKET_H 1
+#cmakedefine HAVE_WS2_TCPIP_H 1
+

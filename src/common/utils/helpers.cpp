@@ -4,6 +4,8 @@
 #endif
 #ifdef WIN32
 #include <network/socket.h>
+#else
+#include <sys/socket.h>
 #endif
 
 #include "utils/helpers.h"

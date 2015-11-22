@@ -1,4 +1,5 @@
 #pragma once
+#include "config.h"
 #include <deque>
 #ifdef HAVE_SYS_UIO_H
 #include <sys/uio.h>

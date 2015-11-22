@@ -1,4 +1,5 @@
 #pragma once
+#include "config.h"
 #if !defined(HAVE_EPOLL_H) && !defined(HAVE_KQUEUE_H)
 
 #include "network/poller.h"

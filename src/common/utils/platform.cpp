@@ -1,6 +1,10 @@
+#include "config.h"
 #include "utils/platform.h"
 #ifdef WIN32
 #include <network/socket.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 int socketclose(int fd)
@@ -8,7 +12,7 @@ int socketclose(int fd)
 #ifdef WIN32
 	return ::closesocket(fd);
 #else
-	return ::close(socket);
+	return ::close(fd);
 #endif
 }
 

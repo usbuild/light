@@ -10,6 +10,6 @@ struct iovec
 	unsigned int iov_len;
 };
 
-int socketclose(int fd);
 unsigned int writev(int fd, struct iovec *, unsigned int);
 #endif
+int socketclose(int fd);

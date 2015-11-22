@@ -29,7 +29,7 @@ TEST(Handler, test) {
 	auto lua_service = DefaultContextLoader::instance().require_service<LuaService>("luaservice", "luaservice", ctx);
 
 	//lua_service->post
-	lua_service->install_new_handler("D:\\Workspace\\game_engine\\light\\build\\test.lua", "aluahandler", "");
+	lua_service->install_new_handler("test.lua", "aluahandler", "");
     ctx.get_looper().loop();
 
   /*

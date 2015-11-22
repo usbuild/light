@@ -1,3 +1,4 @@
+#include "config.h"
 #ifdef HAVE_EPOLL_H
 #include "network/epoll_poller.h"
 namespace light {
