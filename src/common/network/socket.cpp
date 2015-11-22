@@ -165,14 +165,12 @@ light::utils::ErrorCode Socket::set_reuseaddr(int enable) {
 	return ec;
 }
 ssize_t Socket::write(light::utils::ErrorCode &ec, const void *buf, size_t len, int flags) {
-	errno = 0;
 	ssize_t s = ::send(this->sockfd_, static_cast<const char*>(buf), len, flags);
 	ec = LS_GENERIC_ERROR(errno);
 	return s;
 }
 
 ssize_t Socket::read(light::utils::ErrorCode &ec, void *buf, size_t len, int flags) {
-	errno = 0;
 	ssize_t s = ::recv(this->sockfd_, static_cast<char*>(buf), len, flags);
 	ec = LS_GENERIC_ERROR(errno);
 	return s;

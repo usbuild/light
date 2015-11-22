@@ -12,6 +12,10 @@ extern "C" {
 #ifdef WIN32
 //#define errno 
 #define ERRNO(x) (WSA##x)
+#ifdef errno
+#undef errno
+#endif
+#define errno (WSAGetLastError())
 #else
 #define ERRNO(x) (x)
 #endif
