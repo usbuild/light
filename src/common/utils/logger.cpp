@@ -18,7 +18,7 @@ namespace light {
 			static thread_local char t_buff[32];
 			memset(t_buff, 0, 32);
 			uint64_t stamp = get_timestamp();
-			int64_t sec = stamp / 1000000;
+			time_t sec = static_cast<time_t>(stamp / 1000000);
 			int64_t usec = stamp % 1000000;
 			struct tm *tm = localtime(&sec);
 			int len = strftime(t_buff, sizeof(t_buff), "%m/%d/%y %H:%M:%S", tm);
