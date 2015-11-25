@@ -25,9 +25,7 @@ namespace light {
 			light::utils::ErrorCode update_dispatcher(Dispatcher &dispatcher);
 
 		private:
-			FD_SET readfds_;
-			FD_SET writefds_;
-			FD_SET errorfds_;
+			std::vector<struct pollfd> fds_;
 		};
 		
 	} /* network */

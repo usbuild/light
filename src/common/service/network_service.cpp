@@ -258,7 +258,7 @@ namespace light {
 						CommonPacket pkt;
 						pkt.data = buf;
 						pkt.size = bytes_read;
-						pkt.destroy = [this, buf](){fixed_alloc_.free(buf);};
+						pkt.destroy = [this, buf](){fixed_alloc_.dealloc(buf);};
 						pkt.handle = handle;
 
 						this->on_get_message_from_remote(handle, pkt, get_tcp_peer_endpoint(conn));

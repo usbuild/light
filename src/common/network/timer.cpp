@@ -25,10 +25,13 @@ namespace light {
 			if (!expired()) return false;
 			if (triggered_) return false;
 			triggered_ = true;
-			if (expire_callback_) expire_callback_();
 			if (repeatable()) {
 				triggered_ = false;
 				next_ += interval_;
+			}
+			if (expire_callback_) {
+				functor f = expire_callback_;
+				f();
 			}
 			return true;
 		}
@@ -48,7 +51,7 @@ namespace light {
 			auto it = queue_.find(ent);
 			if (it != queue_.end()) {
 				if (it == queue_.begin()) need_update = true;
-				queue_.erase(TimerEntry(timer->get_next(), timer));
+				queue_.erase(it);
 				delete timer;
 			}
 		}

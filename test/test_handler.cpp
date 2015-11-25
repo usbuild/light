@@ -29,10 +29,14 @@ TEST(Handler, test) {
 	auto lua_service = DefaultContextLoader::instance().require_service<LuaService>("luaservice", "luaservice", ctx);
 
 	//lua_service->post
-	lua_service->install_new_handler("test.lua", "aluahandler", "");
-    ctx.get_looper().loop();
+	lua_service->install_new_handler(LUA_TEST_DIR"test.lua", "aluahandler", "");
 
-  /*
+	ctx.get_looper().add_timer(ec, 5000000LL, 0, [&ctx] {
+		ctx.get_looper().stop();
+	});
+
+    ctx.get_looper().loop();
+	
 	const int main_thread_num = std::thread::hardware_concurrency();
 	std::thread *ths = new std::thread[main_thread_num];
 
@@ -43,5 +47,4 @@ TEST(Handler, test) {
 		ths[i].join();
 	}
 	delete []ths;
-  */
 }

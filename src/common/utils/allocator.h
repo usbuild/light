@@ -13,6 +13,17 @@ namespace light {
 		template<int N, int MAX_RESERVE=5>
 			class FixedAllocator {
 			public:
+				~FixedAllocator()
+				{
+					std::lock_guard<std::mutex> lock_guard(lock_);
+					while(free_count_)
+					{
+						auto *old = free_list_->data;
+						free_list_ = free_list_->next;
+						delete old;
+						--free_count_;
+					}
+				}
 			public:
 				FixedAllocator(): free_list_(nullptr), free_count_(0) {}
 				char *alloc() {
@@ -27,7 +38,7 @@ namespace light {
 					return d;
 				}
 
-				void free(char *data) {
+				void dealloc(char *data) {
 					std::lock_guard<std::mutex> lock_guard(lock_);
 					FixedMemNode<N> *node = reinterpret_cast<FixedMemNode<N>*>(data);
 					node->next = free_list_;

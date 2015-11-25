@@ -15,10 +15,8 @@ using namespace light::network;
 using namespace std::placeholders;
 
 TEST(Socket, demo) {/*{{{*/
-	return;
 	light::utils::ErrorCode ec;
 	light::network::TcpSocket socket(INetEndPoint(light::network::protocol::v4(), 0));
-	//light::network::TcpSocket socket("10.240.120.88", 19038);
 	socket.set_reuseaddr(1);
 	ec = socket.connect(INetEndPoint("220.181.57.217", 80));
 	DLOG(INFO) << ec.message();
@@ -72,7 +70,6 @@ private:
 };/*}}}*/
 
 TEST(Acceptor, accept) {/*{{{*/
-	return;
 	Looper looper;
 	Acceptor acceptor(looper);
 	INetEndPoint endpoint(protocol::v4(), 8888);
@@ -87,14 +84,10 @@ TEST(Acceptor, accept) {/*{{{*/
 			(new EchoConnection(looper, fd))->run();
 		});
 
-	//looper.loop();
+//	looper.loop();
 }/*}}}*/
 
-TEST(ENET, test) {
-}
-
 TEST(TcpClient, accept) {/*{{{*/
-	return;
 	Looper looper;
 	TcpClient tcp_client(looper);
 	tcp_client.open(protocol::v4());
@@ -103,32 +96,37 @@ TEST(TcpClient, accept) {/*{{{*/
 	char *wbuf = new char[1024];
 	TcpConnection *conn = nullptr;
 	tcp_client.async_connect(INetEndPoint("220.181.57.217", 80), [&tcp_client, &looper, buf, wbuf, &conn](const light::utils::ErrorCode &ec){
+		DLOG(INFO) << ec.message();
 			if (ec.ok()) {
 				conn = new TcpConnection(looper, tcp_client.get_sockfd());
 				std::string hello(
 					"GET / HTTP/1.1\r\n"
 					"User-Agent: curl/7.26.0\r\n"
-					"Host: 10.240.120.88\r\n"
+					"Host: baidu.com\r\n"
 					"Accept: */*\r\n\r\n"
 					  );
 				::memcpy(wbuf, hello.data(), hello.size());
-				conn->async_write(wbuf, hello.size(), []{});
+				conn->async_write(wbuf, hello.size(), []{
+					EXPECT_TRUE(true);
+				});
 				::memset(buf, 0, 1024);
-				conn->async_read_some(buf, 1024, [buf](const light::utils::ErrorCode &ec, int bytes_transferred){
+				conn->async_read_some(buf, 1024, [buf, &looper](const light::utils::ErrorCode &ec, int bytes_transferred){
+					DLOG(INFO) << ec.message();
 					UNUSED(ec);
 					UNUSED(bytes_transferred);
 					DLOG(INFO) << buf;
+					EXPECT_TRUE(true);
+					looper.stop();
 				});
 			} else {
+				EXPECT_TRUE(false);
 				DLOG(INFO) << ec.message();
 			}
 		}, 10 * 1000000LL);
-	//looper.loop();
+	looper.loop();
 }/*}}}*/
 
 TEST(Looper, demo) {/*{{{*/
-	return;
-	light::network::TcpSocket socket(INetEndPoint(light::network::protocol::v4(), 0));
 	Looper looper;
 	light::utils::ErrorCode ec;
 	int i = 0;
@@ -137,13 +135,11 @@ TEST(Looper, demo) {/*{{{*/
 	timer_id = looper.add_timer(ec, 1000000LL, 1000000LL, [&i, &timer_id, &ec, &looper]{
 		i += 1;
 		if (i == 2) {
-			RawMessage *rw = new RawMessage("hello", 6);
-			looper.post([&looper](){
-				looper.stop();
-				});
-		} else if (i == 3) {
-			DLOG(INFO) << "cancel timer";
+			DLOG(INFO) << "trigger 2";
+		} else if (i == 1) {
+			Looper *l1 = &looper;
 			looper.cancel_timer(ec, timer_id);
+			Looper *l = &looper;
 			looper.stop();
 		} else {
 			DLOG(INFO) << "trigger";
@@ -152,7 +148,6 @@ TEST(Looper, demo) {/*{{{*/
 
 	looper.add_timer(ec, 1500000LL, 0, [&looper]{
 			DLOG(INFO) << "one shot";
-			looper.stop();
 		});
 	looper.loop();
 }/*}}}*/

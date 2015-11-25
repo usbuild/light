@@ -32,7 +32,7 @@ namespace light {
 #else
 				int err = 0;
 #endif
-				socklen_t len = sizeof(int);
+				socklen_t len = sizeof(err);
 				int i = getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &len);
 				if (i == -1) {
 					return LS_GENERIC_ERROR(errno);
@@ -73,6 +73,7 @@ namespace light {
 		{
 #ifdef WIN32
 			WSACleanup();
+			_CrtDumpMemoryLeaks();
 #endif
 		}
 	} /* ut */

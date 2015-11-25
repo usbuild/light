@@ -28,6 +28,7 @@ ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	SET(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
 	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:MSVCRTD.lib")
 	SET(STRICT_CXX_FLAGS "/nologo")
+	ADD_DEFINITIONS(-D_WINSOCK_DEPRECATED_NO_WARNINGS -D_CRT_SECURE_NO_WARNINGS -D_CRTDBG_MAP_ALLOC=1)
 ELSE()
 
 ENDIF ()
@@ -58,7 +59,9 @@ FILE (MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/gen_header/proto)
 ADD_SUBDIRECTORY (3rd)
 INCLUDE_DIRECTORIES (${CMAKE_BINARY_DIR}/deps/include)
 LINK_DIRECTORIES (${CMAKE_BINARY_DIR}/deps/lib)
+ADD_DEFINITIONS(-DLUA_SRC_DIR="${CMAKE_SOURCE_DIR}/src/lua/" -DLUA_TEST_DIR="${CMAKE_SOURCE_DIR}/test/lua/")
 
+############flatbuffer
 FILE (GLOB proto_SRC "src/common/proto/*.fbs")
 SET (PROTOC_C_OUT_FLAG  -c)
 SET (PROTO_GEN_DIR ${CMAKE_BINARY_DIR}/gen_header/proto)
@@ -82,6 +85,10 @@ FOREACH(PROTO_FILE ${proto_SRC})
 ENDFOREACH(PROTO_FILE ${PROTO_INPUT})
 
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/gen_header/)
+##################end flatbuffer
+
+
+#####################lightserver_common
 ADD_LIBRARY (lightserver_common ${lightserver_lib_SRC} ${PROTO_GEN})
 
 IF (strict AND debug)
@@ -99,7 +106,7 @@ ENDIF()
 TARGET_LINK_LIBRARIES (lightserver_common lua ${COMMLIB})
 
 INCLUDE_DIRECTORIES ("${PROJECT_SOURCE_DIR}/src/common")
-
+#####################end lightserver_common
 
 ADD_SUBDIRECTORY (src)
 

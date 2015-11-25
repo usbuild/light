@@ -87,6 +87,16 @@ namespace light {
 				this->looper_ = &looper;
 			}
 
+			int get_index() const
+			{
+				return index_;
+			}
+
+			void set_index(int index)
+			{
+				index_ = index;
+			}
+
 		public:
 			light::utils::ErrorCode attach(Looper &looper);
 			light::utils::ErrorCode detach();
@@ -144,6 +154,7 @@ namespace light {
 			DispatcherEventCallback error_callback_;
 
 			PollEventData poll_events_;
+			int index_;
 			static const int NO_EVENT;
 			static const int READ_EVENT;
 			static const int WRITE_EVENT;

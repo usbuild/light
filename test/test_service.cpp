@@ -97,13 +97,17 @@ class Shuttle : public MessageHandler {
 };
 
 TEST(Service, demo) {
-	return;
 	Context ctx;
 
 	std::shared_ptr<NetworkService> ptr = DefaultContextLoader::instance().require_service<NetworkService>("network", "shuttle-network", ctx);
 	Shuttle shuttle(*ptr);
 	ctx.install_handler(shuttle);
 
+	light::utils::ErrorCode ec;
+	ctx.get_looper().add_timer(ec, 3000000LL, 0, [&ctx]{
+		ctx.get_looper().stop();
+	});
+	
 	const int main_thread_num = 4;
 	std::thread *ths = new std::thread[main_thread_num];
 	for (int i = 0; i < main_thread_num; ++i) {

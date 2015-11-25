@@ -105,6 +105,7 @@ namespace light {
 			uintptr_t Looper::add_timer(light::utils::ErrorCode &ec, Timestamp timeout, Timestamp interval, const functor &time_callback) {
 				ec = LS_OK_ERROR();
 				bool need_update;
+				assert(sizeof(uintptr_t) == sizeof(Timer*));
 				auto ret = reinterpret_cast<uintptr_t>(queue_.add_timer(timeout, interval, need_update, time_callback));
 				if (need_update) {
 					ec = update_timerfd_expire();
@@ -167,7 +168,7 @@ namespace light {
 						}
 
 						valid_dispatchers_.clear();
-#ifndef HAVE_TIMERFD
+#ifdef HAVE_TIMERFD
 						const int64_t tick_milisec = -1;
 #else
 						const int64_t tick_milisec = 1;

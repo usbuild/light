@@ -10,22 +10,20 @@ namespace light {
 	namespace network {
 
 		SelectPoller::SelectPoller(Looper &looper) : Poller(looper) {
-			FD_ZERO(&readfds_);
-			FD_ZERO(&writefds_);
-			FD_ZERO(&errorfds_);
+			
 		}
 
 		SelectPoller::~SelectPoller() {}
 
 		//millisecs
 		light::utils::ErrorCode SelectPoller::poll(int timeout, std::unordered_map<int, Dispatcher*> &active_dispatchers) {
-
-
-			struct timeval tv;
-			tv.tv_sec = timeout / 1000;
-			tv.tv_usec = timeout % 1000 * 1000000;
 			
-			int num_events = ::select(0/*compatible for win*/, &readfds_, &writefds_, &errorfds_, &tv);
+			if (fds_.size() == 0)
+			{
+				::Sleep(timeout);
+				return LS_OK_ERROR();
+			}
+			int num_events = ::WSAPoll(&*fds_.begin(), fds_.size(), timeout);
 
 			if (num_events < 0) {
 				if (errno == EINTR) {
@@ -33,27 +31,19 @@ namespace light {
 				}
 			} else if (num_events == 0) {
 				return LS_OK_ERROR();
-			} else {
-
-				for (auto &kv : dispatchers_)
-				{
-					bool valid = true;
-					if (FD_ISSET(kv.first, &readfds_))
-					{
-						kv.second->set_poll_event_data(true, false, false, false);
-					} else if (FD_ISSET(kv.first, &writefds_))
-					{
-						kv.second->set_poll_event_data(false, true, false, false);
-					} else if (FD_ISSET(kv.first, &errorfds_))
-					{
-						kv.second->set_poll_event_data(false, false, true, false);
-					} else
-					{
-						valid = false;
-					}
-					if (valid)
-					{
-						active_dispatchers[kv.first] = kv.second;
+			}
+			else {
+				for (auto it = fds_.begin(); it != fds_.end() && num_events > 0; ++it) {
+					if (it->revents > 0) {
+						--num_events;
+						Dispatcher *dispatcher = dispatchers_[it->fd];
+						dispatcher->set_poll_event_data(
+							it->revents & (POLLIN | POLLPRI),
+							it->revents & POLLOUT,
+							it->revents & POLLERR,
+							(it->revents & POLLHUP) && !(it->revents & POLLIN)
+							);
+						active_dispatchers[dispatcher->get_fd()] = dispatcher;
 					}
 				}
 			}
@@ -64,13 +54,19 @@ namespace light {
 			assert(dispatchers_.find(dispatcher.get_fd()) == dispatchers_.end());
 			int sock = dispatcher.get_fd();
 			
+			struct pollfd pd;
+			
+			pd.fd = sock;
+			pd.events = 0;
+
 			if (dispatcher.readable()) {
-				FD_SET(sock, &readfds_);
+				pd.events |= POLLIN;
 			}
 			if (dispatcher.writable()) {
-				FD_SET(sock, &writefds_);
+				pd.events |= POLLOUT;
 			}
-			FD_SET(sock, &errorfds_);
+			dispatcher.set_index(fds_.size());
+			fds_.push_back(pd);
 
 			dispatchers_[dispatcher.get_fd()] = &dispatcher;
 			return LS_OK_ERROR();
@@ -80,9 +76,18 @@ namespace light {
 			assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
 
 			int sock = dispatcher.get_fd();
-			FD_CLR(sock, &readfds_);
-			FD_CLR(sock, &writefds_);
-			FD_CLR(sock, &errorfds_);
+			
+			int vec_idx = dispatcher.get_index();
+			if (dispatchers_.size() > 1)
+			{
+				fds_[vec_idx] = fds_[fds_.size() - 1];
+				auto tgt_disp = dispatchers_[fds_[vec_idx].fd];
+				tgt_disp->set_index(vec_idx);
+				fds_.pop_back();
+			} else
+			{
+				fds_.clear();
+			}
 
 			dispatchers_.erase(dispatcher.get_fd());
 			return LS_OK_ERROR();
@@ -92,17 +97,17 @@ namespace light {
 			assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
 			int sock = dispatcher.get_fd();
 			
+			struct pollfd &pd = fds_[dispatcher.get_index()];
+
+			pd.events = 0;
+
 			if (dispatcher.readable()) {
-				FD_SET(sock, &readfds_);
-			} else {
-				FD_CLR(sock, &readfds_);
+				pd.events |= POLLIN;
 			}
 			if (dispatcher.writable()) {
-				FD_SET(sock, &writefds_);
-			} else {
-				FD_CLR(sock, &writefds_);
+				pd.events |= POLLOUT;
 			}
-			FD_SET(sock, &errorfds_);
+
 			return LS_OK_ERROR();
 		}
 

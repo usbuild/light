@@ -3,7 +3,7 @@ INCLUDE (ExternalProject)
 ExternalProject_Add(enet_proj
 	GIT_REPOSITORY https://github.com/lsalzman/enet.git
 	GIT_TAG 5f476546edabdf37509cd3448d1a616f5eca535d
-	#PATCH_COMMAND git apply ${CMAKE_SOURCE_DIR}/src/enet.diff
+	#PATCH_COMMAND git apply ${CMAKE_SOURCE_DIR}/3rd/enet.diff
 	INSTALL_COMMAND cp -p <BINARY_DIR>/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}enet${CMAKE_STATIC_LIBRARY_SUFFIX} ${CMAKE_BINARY_DIR}/deps/lib &&
 									cp -r -p <SOURCE_DIR>/include/enet ${CMAKE_BINARY_DIR}/deps/include
 	)
@@ -28,7 +28,7 @@ ENDIF()
 
 ExternalProject_Add(lua_proj
 	URL http://www.lua.org/ftp/lua-5.3.1.tar.gz
-	PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/src/luaCMakeLists.txt <SOURCE_DIR>/CMakeLists.txt
+	PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/3rd/luaCMakeLists.txt <SOURCE_DIR>/CMakeLists.txt
 	INSTALL_COMMAND cp -p <BINARY_DIR>/${CMAKE_CFG_INTDIR}/${CMAKE_STATIC_LIBRARY_PREFIX}lua${CMAKE_STATIC_LIBRARY_SUFFIX} ${CMAKE_BINARY_DIR}/deps/lib &&
 									sh -c "cp <SOURCE_DIR>/src/*.h ${CMAKE_BINARY_DIR}/deps/include"
 	)
