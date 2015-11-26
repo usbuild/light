@@ -25,34 +25,42 @@ namespace light {
 			if (!expired()) return false;
 			if (triggered_) return false;
 			triggered_ = true;
+			
+			if (expire_callback_) {
+				expire_callback_();
+			}
+
 			if (repeatable()) {
 				triggered_ = false;
 				next_ += interval_;
-			}
-			if (expire_callback_) {
-				functor f = expire_callback_;
-				f();
 			}
 			return true;
 		}
 
 
 		//TimerQueue
-		Timer* TimerQueue::add_timer(Timestamp expire_time, Timestamp interval, bool &need_update, functor expire_callback) {
+		TimerId TimerQueue::add_timer(Timestamp expire_time, Timestamp interval, bool &need_update, functor expire_callback) {
 			auto now = light::utils::get_timestamp();
-			auto timer = new Timer(expire_time + now, interval, expire_callback);
-			need_update = insert(*timer);
-			return timer;
+			auto timer = std::make_shared<Timer>(expire_time + now, interval, expire_callback);
+			timer->set_timer_id(++last_insert_timer_id_);
+			need_update = insert(timer);
+			return timer->get_timer_id();
 		}
 
-		void TimerQueue::del_timer(Timer *timer, bool &need_update) {
+		void TimerQueue::del_timer(TimerId timer_id, bool &need_update) {
 			need_update = false;
+			auto itr = timer_id_map_.find(timer_id);
+			if (itr != timer_id_map_.end())
+			{
+				return;
+			}
+			auto timer = itr->second->second;
 			TimerEntry ent(timer->get_next(), timer);
 			auto it = queue_.find(ent);
 			if (it != queue_.end()) {
 				if (it == queue_.begin()) need_update = true;
 				queue_.erase(it);
-				delete timer;
+				timer_id_map_.erase(timer_id);
 			}
 		}
 
@@ -75,10 +83,11 @@ namespace light {
 					}
 					it = queue_.erase(it);
 					if (timer->repeatable()) {
-						queue_.insert(TimerEntry(timer->get_next(), timer));
+						insert(timer);
 						it = queue_.begin();
-					} else {
-						delete timer;
+					} else
+					{
+						timer_id_map_.erase(timer->get_timer_id());
 					}
 				} else {
 					break;
@@ -90,21 +99,23 @@ namespace light {
 			update_time(light::utils::get_timestamp());
 		}
 
-		Timer* TimerQueue::get_nearist_timer() {
+		std::shared_ptr<Timer> TimerQueue::get_nearist_timer() {
 			if (queue_.size()) {
 				return queue_.begin()->second;
 			}
 			return nullptr;
 		}
 
-		bool TimerQueue::insert(Timer &timer) {
+		bool TimerQueue::insert(std::shared_ptr<Timer> timer) {
 			bool need_update = false;
-			auto next = timer.get_next();
+			auto next = timer->get_next();
 			auto it = queue_.begin();
 			if (it == queue_.end() || next < it->first) {
 				need_update = true;
 			}
-			queue_.insert(TimerEntry(timer.get_next(), &timer));
+			
+			auto itr = queue_.insert(TimerEntry(timer->get_next(), timer)).first;
+			timer_id_map_[timer->get_timer_id()] = itr;
 			return need_update;
 		}
 	} /* ne */

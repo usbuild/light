@@ -137,7 +137,7 @@ namespace light {
 			std::unordered_map<uint32_t, ConnectionContainer> connection_map_;
 			std::map<uint32_t, ENetHost*> all_enet_hosts_;
 
-			std::unordered_map<ENetPeer*, std::tuple<uintptr_t, network_service_callback_t, uint32_t> > connect_callbacks_;
+			std::unordered_map<ENetPeer*, std::tuple<light::network::TimerId, network_service_callback_t, uint32_t> > connect_callbacks_;
 			uint32_t last_socket_id_;
 			uint32_t last_callback_idx_;
 			int loop_idx_;

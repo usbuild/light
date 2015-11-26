@@ -102,21 +102,20 @@ namespace light {
 				return *event_dispatcher_;
 			}
 
-			uintptr_t Looper::add_timer(light::utils::ErrorCode &ec, Timestamp timeout, Timestamp interval, const functor &time_callback) {
+			TimerId Looper::add_timer(light::utils::ErrorCode &ec, Timestamp timeout, Timestamp interval, const functor &time_callback) {
 				ec = LS_OK_ERROR();
 				bool need_update;
-				assert(sizeof(uintptr_t) == sizeof(Timer*));
-				auto ret = reinterpret_cast<uintptr_t>(queue_.add_timer(timeout, interval, need_update, time_callback));
+				auto ret = queue_.add_timer(timeout, interval, need_update, time_callback);
 				if (need_update) {
 					ec = update_timerfd_expire();
 				}
 				return ret;
 			}
 
-			void Looper::cancel_timer(light::utils::ErrorCode &ec, const uintptr_t timer_id) {
+			void Looper::cancel_timer(light::utils::ErrorCode &ec, const TimerId timer_id) {
 				ec = LS_OK_ERROR();
 				bool need_update;
-				queue_.del_timer(reinterpret_cast<Timer*>(timer_id), need_update);
+				queue_.del_timer(timer_id, need_update);
 				if (need_update) {
 					ec = update_timerfd_expire();
 				}

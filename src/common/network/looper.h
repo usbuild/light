@@ -79,9 +79,9 @@ namespace light {
 
 			Dispatcher& get_event_dispatcher();
 
-			uintptr_t add_timer(light::utils::ErrorCode &ec, Timestamp timeout, Timestamp interval, const functor &time_callback);
+			TimerId add_timer(light::utils::ErrorCode &ec, Timestamp timeout, Timestamp interval, const functor &time_callback);
 
-			void cancel_timer(light::utils::ErrorCode &ec, const uintptr_t timer_id);
+			void cancel_timer(light::utils::ErrorCode &ec, const TimerId timer_id);
 
 			light::utils::ErrorCode update_timerfd_expire();
 

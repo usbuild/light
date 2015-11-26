@@ -130,7 +130,7 @@ namespace light {
 				auto it = connect_callbacks_.find(event.peer);
 				if (it != connect_callbacks_.end()) {
 					ENetPeer *peer = it->first;
-					uintptr_t timer_id = std::get<0>(it->second);
+					auto timer_id = std::get<0>(it->second);
 					network_service_callback_t cb = std::get<1>(it->second);
 
 					uint32_t opaque = std::get<2>(it->second);
@@ -350,7 +350,7 @@ namespace light {
 					func(LS_GENERIC_ERR_OBJ(too_many_files_open), 0);
 				}
 				light::utils::ErrorCode ec;
-				uintptr_t tid = get_looper().add_timer(ec, micro_sec, 0, [peer, this](){
+				auto tid = get_looper().add_timer(ec, micro_sec, 0, [peer, this](){
 					auto it = connect_callbacks_.find(peer);
 					if (it == connect_callbacks_.end()) {
 						DLOG(FATAL) << "peer not found!! " << peer;

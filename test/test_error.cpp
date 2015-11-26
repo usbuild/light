@@ -136,10 +136,8 @@ TEST(Looper, demo) {/*{{{*/
 		i += 1;
 		if (i == 2) {
 			DLOG(INFO) << "trigger 2";
-		} else if (i == 1) {
-			Looper *l1 = &looper;
+		} else if (i == 3) {
 			looper.cancel_timer(ec, timer_id);
-			Looper *l = &looper;
 			looper.stop();
 		} else {
 			DLOG(INFO) << "trigger";
