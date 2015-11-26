@@ -164,10 +164,10 @@ namespace light {
 		class ErrorCode {
 		public:
 
-			explicit ErrorCode(int error_code=0) {
-				*this = error_code;
+			explicit ErrorCode(int n_error_code=0) {
+				*this = n_error_code;
 			}
-			ErrorCode(int error_code, BasicErrorCategory& category): raw_error_code_(error_code), category_(&category) {}
+			ErrorCode(int n_error_code, BasicErrorCategory& category): raw_error_code_(n_error_code), category_(&category) {}
 
 			ErrorCode(const ErrorCode& ec) {*this = ec;}
 			ErrorCode(const ErrorCode&& ec) {*this = ec;}
