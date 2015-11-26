@@ -10,7 +10,7 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - kalakris-cmake
+    - george-edison55-precise-backports
     packages:
     - gcc-4.8
     - g++-4.8
@@ -18,6 +18,6 @@ addons:
     - cmake
   
 script: 
-  - mkdir build && cd build && cmake .. && cmake --build .
+  - mkdir build && cd build && cmake .. --debug-output --trace && cmake --build .
 os:
   - linux
