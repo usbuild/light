@@ -12,10 +12,10 @@ FILE (GLOB lightserver_lib_SRC "src/common/**/*.h" "src/common/**/*.cpp")
 IF(NOT WIN32)
 SET(CMAKE_CXX_FLAGS "-std=c++11 -Wall -Werror -Wno-unused -Wextra")
 
-SET(STRICT_CXX_FLAGS "-Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self \
-											-Wmissing-declarations -Woverloaded-virtual \
-											-Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wswitch-default -Wundef \
-											-Wpointer-arith -Wcast-qual -pedantic")
+SET(STRICT_CXX_FLAGS "-Wcast-align -Wcast-qual -Wdisabled-optimization -Wformat=2 -Winit-self ")
+SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -Wmissing-declarations -Woverloaded-virtual ")
+SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -Wredundant-decls -Wshadow -Wsign-promo -Wstrict-overflow=5 -Wswitch-default -Wundef ")
+SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -Wpointer-arith -Wcast-qual -pedantic")
 ENDIF()
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
