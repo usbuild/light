@@ -3,6 +3,15 @@ compiler:
   - gcc
   - clang
  
+gcc:
+  - "4.8"
+
+clang:
+  - "3.2"
+
+cmake:
+  - "3.4"
+  
 script: 
   - mkdir build && cd build && cmake .. && cmake --build .
 os:
