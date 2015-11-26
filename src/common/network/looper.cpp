@@ -123,11 +123,11 @@ namespace light {
 
 			light::utils::ErrorCode Looper::update_timerfd_expire() {
 #ifdef HAVE_TIMERFD
-				Timer* timer= queue_.get_nearist_timer();
+				auto timer= queue_.get_nearist_timer();
 				struct itimerspec spec;
 				spec.it_interval.tv_sec = 0;
 				spec.it_interval.tv_nsec = 0;
-				if (timer != nullptr) {
+				if (timer) {
 					auto next = timer->get_next();
 					spec.it_value.tv_sec = next / 1000000LL;
 					spec.it_value.tv_nsec = next % 1000000LL * 1000;
