@@ -3,5 +3,8 @@ compiler:
   - gcc
   - clang
  
- script: 
+script: 
   - mkdir build && cd build && cmake .. && cmake --build .
+os:
+  - linux
+  - osx
