@@ -21,7 +21,8 @@ SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -Wpointer-arith -Wcast-qual -pedantic"
 ENDIF()
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-	SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -stdlib=libc++")
+	#SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} ")
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++ ")
 ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 	SET(STRICT_CXX_FLAGS "${STRICT_CXX_FLAGS} -Wlogical-op -Wnoexcept -Wstrict-null-sentinel -Wuninitialized")
 ELSEIF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
