@@ -18,6 +18,6 @@ addons:
     - cmake
   
 script: 
-  - mkdir build && cd build && cmake .. --debug-output && cmake --build .
+  - mkdir build && cd build && cmake .. --debug-output && make VERBOSE=1
 os:
   - linux
