@@ -1,0 +1,6 @@
+build_script:
+  - md build
+  - cd build
+  - cmake ..
+  - cmake --build . --config Debug
+  - test/unit_test.exe
