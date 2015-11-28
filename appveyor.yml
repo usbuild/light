@@ -11,5 +11,4 @@ build_script:
   - cmake --build . --config Debug
 
 test_script:
-  - cd build
   - ctest -V
