@@ -1,6 +1,4 @@
 #include "core/service.h"
 namespace light {
-	namespace core {
-
-	} /* core */
+namespace core {} /* core */
 } /* li */

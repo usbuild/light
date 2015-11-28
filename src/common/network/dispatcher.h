@@ -14,152 +14,169 @@
 #include "utils/noncopyable.h"
 
 namespace light {
-	namespace network {
+namespace network {
 
-		class Looper;
+class Looper;
 
-		struct PollEventData {
-			PollEventData(bool r, bool w, bool e, bool c): read(r), write(w), error(e), close(c) {}
-			bool read;
-			bool write;
-			bool error;
-			bool close;
-		};
+struct PollEventData {
+  PollEventData(bool r, bool w, bool e, bool c)
+      : read(r), write(w), error(e), close(c) {}
+  bool read;
+  bool write;
+  bool error;
+  bool close;
+};
 
-		class Dispatcher: public light::utils::NonCopyable, public std::enable_shared_from_this<Dispatcher>  {
+class Dispatcher : public light::utils::NonCopyable,
+                   public std::enable_shared_from_this<Dispatcher> {
 
-		public:
-			typedef std::function<void()> event_callback;
+public:
+  typedef std::function<void()> event_callback;
 
-		public:
-			Dispatcher(Looper &looper, int fd): looper_(&looper), attached_(false), events_(NO_EVENT), fd_(fd),
-			read_callback_(),
-			write_callback_(),
-			close_callback_(),
-			error_callback_(),
-			poll_events_(false, false, false, false)
-			{
-			}
+public:
+  Dispatcher(Looper &looper, int fd)
+      : looper_(&looper), attached_(false), events_(NO_EVENT), fd_(fd),
+        read_callback_(), write_callback_(), close_callback_(),
+        error_callback_(), poll_events_(false, false, false, false) {}
 
-			~Dispatcher() {
-				if (attached_) detach();
-			}
+  ~Dispatcher() {
+    if (attached_)
+      detach();
+  }
 
-		public:
-			void enable_read() {events_ |= READ_EVENT;reattach();}
-			void enable_write() {events_ |= WRITE_EVENT;reattach();}
-			void disable_read() {events_ &= ~READ_EVENT;reattach();}
-			void disable_write() {events_ &= ~WRITE_EVENT;reattach();}
-			void disable_all() {events_ = NO_EVENT;reattach();}
+public:
+  void enable_read() {
+    events_ |= READ_EVENT;
+    reattach();
+  }
+  void enable_write() {
+    events_ |= WRITE_EVENT;
+    reattach();
+  }
+  void disable_read() {
+    events_ &= ~READ_EVENT;
+    reattach();
+  }
+  void disable_write() {
+    events_ &= ~WRITE_EVENT;
+    reattach();
+  }
+  void disable_all() {
+    events_ = NO_EVENT;
+    reattach();
+  }
 
-			bool readable() {return events_ & READ_EVENT;}
-			bool writable() {return events_ & WRITE_EVENT;}
+  bool readable() { return events_ & READ_EVENT; }
+  bool writable() { return events_ & WRITE_EVENT; }
 
+  void set_read_callback(const event_callback &cb) {
+    read_callback_.set_callback(cb);
+  }
+  void set_write_callback(const event_callback &cb) {
+    write_callback_.set_callback(cb);
+  }
+  void set_close_callback(const event_callback &cb) {
+    close_callback_.set_callback(cb);
+  }
+  void set_error_callback(const event_callback &cb) {
+    error_callback_.set_callback(cb);
+  }
 
-			void set_read_callback(const event_callback &cb) { read_callback_.set_callback(cb); }
-			void set_write_callback(const event_callback &cb) { write_callback_.set_callback(cb); }
-			void set_close_callback(const event_callback &cb) { close_callback_.set_callback(cb); }
-			void set_error_callback(const event_callback &cb) { error_callback_.set_callback(cb); }
+  void set_read_callback(event_callback &&cb) {
+    read_callback_.set_callback(cb);
+  }
+  void set_write_callback(event_callback &&cb) {
+    write_callback_.set_callback(cb);
+  }
+  void set_close_callback(event_callback &&cb) {
+    close_callback_.set_callback(cb);
+  }
+  void set_error_callback(event_callback &&cb) {
+    error_callback_.set_callback(cb);
+  }
 
-			void set_read_callback(event_callback &&cb) { read_callback_.set_callback(cb); }
-			void set_write_callback(event_callback &&cb) { write_callback_.set_callback(cb); }
-			void set_close_callback(event_callback &&cb) { close_callback_.set_callback(cb); }
-			void set_error_callback(event_callback &&cb) { error_callback_.set_callback(cb); }
+  void set_poll_event_data(bool r, bool w, bool e, bool c);
 
+  void handle_events();
 
-			void set_poll_event_data(bool r, bool w, bool e, bool c);
+  int get_fd() const { return fd_; }
 
-			void handle_events();
+  inline bool attached() { return attached_; }
 
-			int get_fd() const {
-				return fd_;
-			}
+  inline Looper &get_looper() const {
+    assert(looper_);
+    return *looper_;
+  }
 
-			inline bool attached() {return attached_;}
+  inline void set_looper(Looper &looper) {
+    assert(!attached_);
+    this->looper_ = &looper;
+  }
 
-			inline Looper& get_looper() const {
-				assert(looper_);
-				return *looper_;
-			}
+  int get_index() const { return index_; }
 
-			inline void set_looper(Looper& looper) {
-				assert(!attached_);
-				this->looper_ = &looper;
-			}
+  void set_index(int index) { index_ = index; }
 
-			int get_index() const
-			{
-				return index_;
-			}
+public:
+  light::utils::ErrorCode attach(Looper &looper);
+  light::utils::ErrorCode detach();
+  light::utils::ErrorCode attach();
+  light::utils::ErrorCode reattach();
 
-			void set_index(int index)
-			{
-				index_ = index;
-			}
+protected:
+  class DispatcherEventCallback {
+  public:
+    DispatcherEventCallback() : running_idx_(0), next_idx_(0) {}
 
-		public:
-			light::utils::ErrorCode attach(Looper &looper);
-			light::utils::ErrorCode detach();
-			light::utils::ErrorCode attach();
-			light::utils::ErrorCode reattach();
+    DispatcherEventCallback(const std::function<void()> &cb)
+        : running_idx_(0), next_idx_(0) {
+      set_callback(cb);
+    }
 
-		protected:
-			class DispatcherEventCallback {
-			public:
-				DispatcherEventCallback(): running_idx_(0), next_idx_(0) {}
+    DispatcherEventCallback(std::function<void()> &&cb)
+        : running_idx_(0), next_idx_(0) {
+      set_callback(cb);
+    }
 
-				DispatcherEventCallback(const std::function<void()> &cb): running_idx_(0), next_idx_(0) {
-					set_callback(cb);
-				}
+    explicit operator bool() const { return !!cb_[next_idx_]; }
 
-				DispatcherEventCallback(std::function<void()> &&cb): running_idx_(0), next_idx_(0) {
-					set_callback(cb);
-				}
+    void operator()() {
+      running_idx_ = next_idx_;
+      cb_[next_idx_]();
+    }
 
-				explicit operator bool() const {
-					return !!cb_[next_idx_];
-				}
+    void set_callback(const event_callback &cb) {
+      next_idx_ = 1 - running_idx_;
+      cb_[next_idx_] = cb;
+    }
 
-				void operator()() {
-					running_idx_ = next_idx_;
-					cb_[next_idx_]();
-				}
+    void set_callback(event_callback &&cb) {
+      next_idx_ = 1 - running_idx_;
+      cb_[next_idx_] = cb;
+    }
 
-				void set_callback(const event_callback &cb) {
-					next_idx_ = 1 - running_idx_;
-					cb_[next_idx_] = cb;
-				}
+  private:
+    event_callback cb_[2];
+    uint8_t running_idx_;
+    uint8_t next_idx_;
+  };
 
-				void set_callback(event_callback &&cb) {
-					next_idx_ = 1 - running_idx_;
-					cb_[next_idx_] = cb;
-				}
+  Looper *looper_;
+  bool attached_;
+  int events_;
+  int fd_;
 
+  DispatcherEventCallback read_callback_;
+  DispatcherEventCallback write_callback_;
+  DispatcherEventCallback close_callback_;
+  DispatcherEventCallback error_callback_;
 
-			private:
-				event_callback cb_[2];
-				uint8_t running_idx_;
-				uint8_t next_idx_;
-			};
+  PollEventData poll_events_;
+  int index_;
+  static const int NO_EVENT;
+  static const int READ_EVENT;
+  static const int WRITE_EVENT;
+};
 
-
-			Looper* looper_;
-			bool attached_;
-			int events_;
-			int fd_;
-
-			DispatcherEventCallback read_callback_;
-			DispatcherEventCallback write_callback_;
-			DispatcherEventCallback close_callback_;
-			DispatcherEventCallback error_callback_;
-
-			PollEventData poll_events_;
-			int index_;
-			static const int NO_EVENT;
-			static const int READ_EVENT;
-			static const int WRITE_EVENT;
-		};
-
-	} /* network */
+} /* network */
 } /* light */
-

@@ -1,12 +1,12 @@
 #pragma once
 namespace light {
-	namespace core {
+namespace core {
 
-		class DynamicContextLoader : public ContextLoader {
-		public:
-		private:
-		};
-		
-	} /* co */
-	
+class DynamicContextLoader : public ContextLoader {
+public:
+private:
+};
+
+} /* co */
+
 } /* li */

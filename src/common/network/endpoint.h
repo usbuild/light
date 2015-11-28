@@ -31,151 +31,157 @@
 #include "utils/platform.h"
 
 namespace light {
-	namespace network {
+namespace network {
 
-		namespace protocol {
+namespace protocol {
 
-			class All : public light::utils::NonCopyable {
-			protected:
-				All() {}
-			public:
-				virtual ~All() {}
-			};
+class All : public light::utils::NonCopyable {
+protected:
+  All() {}
 
-			class V4:public All {};
-			class V6:public All {};
-			class Unknown:public All {};
+public:
+  virtual ~All() {}
+};
 
-			static V4& v4() {
-				static V4 v;
-				return v;
-			}
+class V4 : public All {};
+class V6 : public All {};
+class Unknown : public All {};
 
-			static V6& v6() {
-				static V6 v;
-				return v;
-			}
+static V4 &v4() {
+  static V4 v;
+  return v;
+}
 
-			static Unknown& unknown() {
-				static Unknown v;
-				return v;
-			}
+static V6 &v6() {
+  static V6 v;
+  return v;
+}
 
-		} /* protocol */
+static Unknown &unknown() {
+  static Unknown v;
+  return v;
+}
 
-		class INetEndPoint;
+} /* protocol */
 
-		class INetEndPointIpV4 {
-		public:
-			INetEndPointIpV4() {clear_sockaddr();}
+class INetEndPoint;
 
-			INetEndPointIpV4(const std::string &ip, int port);
+class INetEndPointIpV4 {
+public:
+  INetEndPointIpV4() { clear_sockaddr(); }
 
-			operator INetEndPoint() const;
+  INetEndPointIpV4(const std::string &ip, int port);
 
-			const struct sockaddr *get_sock_addr() const { return reinterpret_cast<const sockaddr*>(&addr4_); }
+  operator INetEndPoint() const;
 
-			light::utils::ErrorCode parse_from_ip_port(const std::string& ip, int port);
+  const struct sockaddr *get_sock_addr() const {
+    return reinterpret_cast<const sockaddr *>(&addr4_);
+  }
 
-			std::string to_string() const { return std::string(::inet_ntoa(addr4_.sin_addr)); }
+  light::utils::ErrorCode parse_from_ip_port(const std::string &ip, int port);
 
-			socklen_t get_socklen() const { return sizeof(addr4_); }
+  std::string to_string() const {
+    return std::string(::inet_ntoa(addr4_.sin_addr));
+  }
 
-			unsigned int get_addr_int() const {return addr4_.sin_addr.s_addr;}
-			void set_addr_int(unsigned int addr) {addr4_.sin_addr.s_addr = addr;}
-			unsigned int get_port() const {return ntohs(addr4_.sin_port);}
-			void set_port(unsigned int port) {addr4_.sin_port = htons(port);}
-			void from_raw_struct(struct sockaddr_in *addr);
+  socklen_t get_socklen() const { return sizeof(addr4_); }
 
-		private:
-			void clear_sockaddr() {memset(&addr4_, 0, sizeof(addr4_));}
-			struct sockaddr_in addr4_;
-		};
+  unsigned int get_addr_int() const { return addr4_.sin_addr.s_addr; }
+  void set_addr_int(unsigned int addr) { addr4_.sin_addr.s_addr = addr; }
+  unsigned int get_port() const { return ntohs(addr4_.sin_port); }
+  void set_port(unsigned int port) { addr4_.sin_port = htons(port); }
+  void from_raw_struct(struct sockaddr_in *addr);
 
-		class INetEndPointIpV6 {
-		public:
-			INetEndPointIpV6() { clear_sockaddr(); }
-			operator INetEndPoint() const;
+private:
+  void clear_sockaddr() { memset(&addr4_, 0, sizeof(addr4_)); }
+  struct sockaddr_in addr4_;
+};
 
-			INetEndPointIpV6(const std::string &ip, int port);
+class INetEndPointIpV6 {
+public:
+  INetEndPointIpV6() { clear_sockaddr(); }
+  operator INetEndPoint() const;
 
-			const struct sockaddr *get_sock_addr() const { return reinterpret_cast<const sockaddr*>(&addr6_); }
+  INetEndPointIpV6(const std::string &ip, int port);
 
-			std::string to_string() const;
+  const struct sockaddr *get_sock_addr() const {
+    return reinterpret_cast<const sockaddr *>(&addr6_);
+  }
 
-			light::utils::ErrorCode parse_from_ip_port(const std::string& ip, int port);
+  std::string to_string() const;
 
-			socklen_t get_socklen() const { return sizeof(addr6_); }
+  light::utils::ErrorCode parse_from_ip_port(const std::string &ip, int port);
 
-			unsigned int get_addr_int() const {return 0;}
-			unsigned int get_port() const {return ntohs(addr6_.sin6_port);}
-			void from_raw_struct(struct sockaddr_in6 *addr);
+  socklen_t get_socklen() const { return sizeof(addr6_); }
 
-		private:
-			void clear_sockaddr() {memset(&addr6_, 0, sizeof(addr6_));}
+  unsigned int get_addr_int() const { return 0; }
+  unsigned int get_port() const { return ntohs(addr6_.sin6_port); }
+  void from_raw_struct(struct sockaddr_in6 *addr);
 
-			struct sockaddr_in6 addr6_;
-		};
+private:
+  void clear_sockaddr() { memset(&addr6_, 0, sizeof(addr6_)); }
 
-		class INetEndPoint {
-		public:
-			INetEndPoint(): family_(AF_UNSPEC) {}
-			INetEndPoint(const INetEndPoint&);
+  struct sockaddr_in6 addr6_;
+};
 
-			explicit INetEndPoint(const INetEndPointIpV4 &src) { *this = src; }
+class INetEndPoint {
+public:
+  INetEndPoint() : family_(AF_UNSPEC) {}
+  INetEndPoint(const INetEndPoint &);
 
-			explicit INetEndPoint(const INetEndPointIpV6 &src) { *this = src; }
+  explicit INetEndPoint(const INetEndPointIpV4 &src) { *this = src; }
 
-			INetEndPoint(const protocol::V4 &v4, int port);
+  explicit INetEndPoint(const INetEndPointIpV6 &src) { *this = src; }
 
-			INetEndPoint(const protocol::V6 &v6, int port);
+  INetEndPoint(const protocol::V4 &v4, int port);
 
-			INetEndPoint(const std::string &ip, int port);
+  INetEndPoint(const protocol::V6 &v6, int port);
 
-			INetEndPoint &operator=(const INetEndPointIpV4& src);
+  INetEndPoint(const std::string &ip, int port);
 
-			INetEndPoint &operator=(const INetEndPointIpV6& src);
+  INetEndPoint &operator=(const INetEndPointIpV4 &src);
 
-			INetEndPoint &operator=(const INetEndPoint& src);
+  INetEndPoint &operator=(const INetEndPointIpV6 &src);
 
+  INetEndPoint &operator=(const INetEndPoint &src);
 
-			const struct sockaddr *get_sock_addr() const;
+  const struct sockaddr *get_sock_addr() const;
 
-			INetEndPointIpV4 get_ipv4() { return addr_.ipv4; }
+  INetEndPointIpV4 get_ipv4() { return addr_.ipv4; }
 
-			INetEndPointIpV6 get_ipv6() { return addr_.ipv6; }
+  INetEndPointIpV6 get_ipv6() { return addr_.ipv6; }
 
-			inline bool is_ipv4() const { return family_ == AF_INET; }
+  inline bool is_ipv4() const { return family_ == AF_INET; }
 
-			inline bool is_ipv6() const { return family_ == AF_INET6; }
+  inline bool is_ipv6() const { return family_ == AF_INET6; }
 
-			std::string to_string() const;
+  std::string to_string() const;
 
-			socklen_t get_socklen() const;
+  socklen_t get_socklen() const;
 
-			protocol::All& get_protocol() const ;
+  protocol::All &get_protocol() const;
 
-			unsigned int get_addr_int() const;
-			unsigned int get_port() const;
+  unsigned int get_addr_int() const;
+  unsigned int get_port() const;
 
-			static sa_family_t get_ip_version(const std::string& ip, light::utils::ErrorCode &ec);
+  static sa_family_t get_ip_version(const std::string &ip,
+                                    light::utils::ErrorCode &ec);
 
-			static INetEndPoint parse_from_ip_port(light::utils::ErrorCode &ec, const std::string& ip, int port);
+  static INetEndPoint parse_from_ip_port(light::utils::ErrorCode &ec,
+                                         const std::string &ip, int port);
 
-			void from_raw_struct(struct sockaddr *addr);
+  void from_raw_struct(struct sockaddr *addr);
 
-		private:
-			typedef union INetEndPointIpV46 {
-				INetEndPointIpV4 ipv4;
-				INetEndPointIpV6 ipv6;
-				INetEndPointIpV46() {
-					memset(this, 0, sizeof(INetEndPointIpV46));
-				}
-			} INetEndPointIpV46;
+private:
+  typedef union INetEndPointIpV46 {
+    INetEndPointIpV4 ipv4;
+    INetEndPointIpV6 ipv6;
+    INetEndPointIpV46() { memset(this, 0, sizeof(INetEndPointIpV46)); }
+  } INetEndPointIpV46;
 
-			INetEndPointIpV46 addr_;
-			sa_family_t family_;
-		};
+  INetEndPointIpV46 addr_;
+  sa_family_t family_;
+};
 
-	} /* network */
+} /* network */
 }

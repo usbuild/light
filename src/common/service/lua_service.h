@@ -4,24 +4,27 @@
 #include "utils/logger.h"
 
 namespace light {
-	namespace service {
+namespace service {
 
-		class LuaService : public light::core::Service {
+class LuaService : public light::core::Service {
 
-		public:
-			LuaService(light::core::Context &ctx);
-			~LuaService();
+public:
+  LuaService(light::core::Context &ctx);
+  ~LuaService();
 
-			light::utils::ErrorCode install_new_handler(const std::string &file, const std::string &name, const std::string &args);
+  light::utils::ErrorCode install_new_handler(const std::string &file,
+                                              const std::string &name,
+                                              const std::string &args);
 
-			light::utils::ErrorCode init() override;
+  light::utils::ErrorCode init() override;
 
-			light::utils::ErrorCode  fini() override;
+  light::utils::ErrorCode fini() override;
 
-			static const char* name;
-		private:
-			light::core::Context *ctx_;
-		};
+  static const char *name;
 
-	} /* handler */
+private:
+  light::core::Context *ctx_;
+};
+
+} /* handler */
 } /* light */

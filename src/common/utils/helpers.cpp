@@ -10,71 +10,67 @@
 
 #include "utils/helpers.h"
 namespace light {
-	namespace utils {
+namespace utils {
 
-
-		int set_nonblocking(int fd) {
+int set_nonblocking(int fd) {
 #ifdef WIN32
-			u_long flag = 1;
-			return ioctlsocket(fd, FIONBIO, &flag);
+  u_long flag = 1;
+  return ioctlsocket(fd, FIONBIO, &flag);
 #else
-			int flags;
-			if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
-				flags = 0;
-			return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+  int flags;
+  if (-1 == (flags = fcntl(fd, F_GETFL, 0)))
+    flags = 0;
+  return fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 #endif
-		}
+}
 
-
-		light::utils::ErrorCode check_socket_error(int fd) {
+light::utils::ErrorCode check_socket_error(int fd) {
 #ifdef WIN32
-				char err = 0;
+  char err = 0;
 #else
-				int err = 0;
+  int err = 0;
 #endif
-				socklen_t len = sizeof(err);
-				int i = getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &len);
-				if (i == -1) {
-					return LS_GENERIC_ERROR(errno);
-				}
-				else if (err != 0) {
-					return LS_GENERIC_ERROR(err);
-				}
-				return LS_OK_ERROR();
-		}
+  socklen_t len = sizeof(err);
+  int i = getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &len);
+  if (i == -1) {
+    return LS_GENERIC_ERROR(errno);
+  } else if (err != 0) {
+    return LS_GENERIC_ERROR(err);
+  }
+  return LS_OK_ERROR();
+}
 
-		uint64_t get_timestamp() {
-			return std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()).time_since_epoch().count();
-		}
+uint64_t get_timestamp() {
+  return std::chrono::time_point_cast<std::chrono::microseconds>(
+             std::chrono::system_clock::now())
+      .time_since_epoch()
+      .count();
+}
 
-		int SocketGlobalInitialize()
-		{
+int SocketGlobalInitialize() {
 #ifdef WIN32
-			WORD versionRequested = MAKEWORD(1, 1);
-			WSADATA wsaData;
+  WORD versionRequested = MAKEWORD(1, 1);
+  WSADATA wsaData;
 
-			if (WSAStartup(versionRequested, &wsaData))
-				return -1;
+  if (WSAStartup(versionRequested, &wsaData))
+    return -1;
 
-			if (LOBYTE(wsaData.wVersion) != 1 ||
-				HIBYTE(wsaData.wVersion) != 1)
-			{
-				WSACleanup();
+  if (LOBYTE(wsaData.wVersion) != 1 || HIBYTE(wsaData.wVersion) != 1) {
+    WSACleanup();
 
-				return -1;
-			}
+    return -1;
+  }
 
 #endif
 
-			return 0;
-		}
+  return 0;
+}
 
-		void SocketGlobalFinitialize()
-		{
+void SocketGlobalFinitialize() {
 #ifdef WIN32
-			WSACleanup();
-			_CrtDumpMemoryLeaks();
+  WSACleanup();
+  _CrtDumpMemoryLeaks();
 #endif
-		}
-	} /* ut */
+}
+} /* ut */
 } /* light */

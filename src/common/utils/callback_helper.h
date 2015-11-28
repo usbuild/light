@@ -1,6 +1,4 @@
 #pragma once
 namespace light {
-	namespace utils {
-
-	} /* utils */
+namespace utils {} /* utils */
 } /* li */

@@ -1,7 +1,7 @@
 #pragma once
 #include "utils/platform.h"
 namespace light {
-	namespace utils {
+namespace utils {
 
 #if 0
 		template<typename T>
@@ -47,5 +47,5 @@ namespace light {
 			};
 
 #endif
-	} /* utils */
+} /* utils */
 } /* light */
