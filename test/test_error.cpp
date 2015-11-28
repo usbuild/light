@@ -19,11 +19,11 @@ TEST(Socket, demo) { /*{{{*/
   light::network::TcpSocket socket(
       INetEndPoint(light::network::protocol::v4(), 0));
   socket.set_reuseaddr(1);
-  ec = socket.connect(INetEndPoint("220.181.57.217", 80));
+  ec = socket.connect(INetEndPoint("93.184.216.34", 80));
   DLOG(INFO) << ec.message();
   std::string hello("GET / HTTP/1.1\r\n"
                     "User-Agent: curl/7.26.0\r\n"
-                    "Host: 10.240.120.88\r\n"
+                    "Host: example.org\r\n"
                     "Accept: */*\r\n\r\n");
   ssize_t size = socket.write(ec, hello.data(), hello.size());
   char buf[1024] = {0};
@@ -97,7 +97,7 @@ TEST(TcpClient, accept) { /*{{{*/
   char *wbuf = new char[1024];
   TcpConnection *conn = nullptr;
   tcp_client.async_connect(
-      INetEndPoint("220.181.57.217", 80),
+      INetEndPoint("93.184.216.34", 80),
       [&tcp_client, &looper, buf, wbuf,
        &conn](const light::utils::ErrorCode &ec) {
         DLOG(INFO) << ec.message();
@@ -105,7 +105,7 @@ TEST(TcpClient, accept) { /*{{{*/
           conn = new TcpConnection(looper, tcp_client.get_sockfd());
           std::string hello("GET / HTTP/1.1\r\n"
                             "User-Agent: curl/7.26.0\r\n"
-                            "Host: baidu.com\r\n"
+                            "Host: example.org\r\n"
                             "Accept: */*\r\n\r\n");
           ::memcpy(wbuf, hello.data(), hello.size());
           conn->async_write(wbuf, hello.size(), [] { EXPECT_TRUE(true); });
