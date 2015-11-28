@@ -15,7 +15,6 @@ ExternalProject_Add(gtest_gmock_src
 
 
 FILE (GLOB_RECURSE ls_test_SRC "*.h" "*.cpp")
-ENABLE_TESTING ()
 ADD_EXECUTABLE (unit_test ${ls_test_SRC})
 IF(NOT WIN32)
 SET(PTHREAD pthread)
@@ -23,6 +22,7 @@ ENDIF()
 TARGET_LINK_LIBRARIES (unit_test gtest gtest_main gmock gmock_main lightserver_common enet ${PTHREAD})
 
 ADD_DEPENDENCIES (unit_test gtest_gmock_src ${LIB_DEP})
+ADD_TEST(all ${CMAKE_BINARY_DIR}/test/unit_test${CMAKE_EXECUTABLE_SUFFIX})
 
 IF(NOT WIN32)
 SET_TARGET_PROPERTIES(unit_test PROPERTIES
