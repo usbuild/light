@@ -117,7 +117,7 @@ private:
   void on_disconnect(uint32_t handle, ENetHost &host, const ENetEvent &event);
 
   void on_get_message_from_remote(uint32_t handle, const CommonPacket &pkt,
-                                  const light::network::INetEndPoint &point);
+                                  const light::network::INetEndPoint &point, uint32_t opque);
 
   void handle_tcp_error(uint32_t handle, const light::utils::ErrorCode &ec);
 
@@ -135,21 +135,21 @@ public:
   constexpr static const char *name = "network";
 
 private:
-  struct ConnectionContainer {
-    ConnectionContainer() = default;
-    ConnectionContainer(void *p, uint32_t opa) : ptr(p), opaque(opa) {}
-    union {
-      light::network::Acceptor *tcp_host;
-      ENetHost *udp_host;
-      light::network::TcpConnection *tcp_conn;
-      ENetPeer *udp_conn;
-      void *ptr;
-    };
-    uint32_t opaque;
+
+  template<typename T>
+  struct ConnectionContainer
+  {
+	  ConnectionContainer() = default;
+	  ConnectionContainer(std::shared_ptr<T> p, uint32_t opa):ptr(p), opaque(opa) {}
+
+	  std::shared_ptr<T> ptr;
+	  uint32_t opaque;
   };
 
-  std::unordered_map<uint32_t, ConnectionContainer> connection_map_;
-  std::map<uint32_t, ENetHost *> all_enet_hosts_;
+  std::unordered_map<uint32_t, ConnectionContainer<light::network::Acceptor> > acceptor_map_;
+  std::unordered_map<uint32_t, ConnectionContainer<ENetHost> > enet_host_map_;
+  std::unordered_map<uint32_t, ConnectionContainer<light::network::TcpConnection> > tcp_connection_map_;
+  std::unordered_map<uint32_t, std::tuple<ENetPeer*, uint32_t> > enet_peer_map_;
 
   std::unordered_map<
       ENetPeer *,

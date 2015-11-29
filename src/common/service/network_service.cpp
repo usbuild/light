@@ -50,20 +50,20 @@ light::utils::ErrorCode NetworkService::init() {
 }
 
 void NetworkService::on_loop() {
-  for (auto &kv : all_enet_hosts_) {
+  for (auto &kv : enet_host_map_) {
     ENetEvent event;
 
-    enet_host_flush(kv.second);
-    if (enet_host_service(kv.second, &event, 0) > 0) {
+    enet_host_flush(kv.second.ptr.get());
+    if (enet_host_service(kv.second.ptr.get(), &event, 0) > 0) {
       switch (event.type) {
       case ENET_EVENT_TYPE_CONNECT:
-        on_connect(kv.first, *kv.second, event);
+        on_connect(kv.first, *kv.second.ptr, event);
         break;
       case ENET_EVENT_TYPE_RECEIVE:
-        on_receive(kv.first, *kv.second, event);
+        on_receive(kv.first, *kv.second.ptr, event);
         break;
       case ENET_EVENT_TYPE_DISCONNECT:
-        on_disconnect(kv.first, *kv.second, event);
+        on_disconnect(kv.first, *kv.second.ptr, event);
         break;
       default:
         break;
@@ -126,20 +126,20 @@ void NetworkService::forward_event_message(
 uint32_t NetworkService::install_udp_connection(uint32_t host_handle,
                                                 ENetPeer *peer,
                                                 uint32_t opaque) {
-  auto udp_host = connection_map_[host_handle];
   uint32_t key = ++last_socket_id_;
   key |= (CONN_TYPE_UDP_CLIENT << CONN_TYPE_SHIFT);
 
-  peer->data = new uint32_t(key);
-  connection_map_[key] = ConnectionContainer(peer, opaque);
+  peer->data = reinterpret_cast<void *>(key);
+
+  enet_peer_map_[key] = std::make_tuple(peer, opaque);
   return key;
 }
 
 void NetworkService::on_connect(uint32_t handle, ENetHost &host,
                                 const ENetEvent &event) {
   DLOG(INFO) << "on connect " << &host << " peer " << event.peer->data;
-  auto udp_host = connection_map_[handle];
-  assert(udp_host.udp_host == &host);
+  auto udp_host = enet_host_map_[handle];
+  assert(udp_host.ptr.get() == &host);
   auto it = connect_callbacks_.find(event.peer);
   if (it != connect_callbacks_.end()) {
     ENetPeer *peer = it->first;
@@ -169,22 +169,22 @@ void NetworkService::on_receive(uint32_t handle, ENetHost &host,
                                 const ENetEvent &event) {
   UNUSED(handle);
   DLOG(INFO) << "receive data " << &host << " " << event.peer->data;
-  uint32_t peer_handle = *static_cast<uint32_t *>(event.peer->data);
+  uint32_t peer_handle = reinterpret_cast<uint32_t>(event.peer->data);
   CommonPacket pkt;
   auto packet = event.packet;
   pkt.data = reinterpret_cast<char *>(packet->data);
   pkt.size = packet->dataLength;
   pkt.handle = peer_handle;
   pkt.destroy = [packet]() { enet_packet_destroy(packet); };
-  on_get_message_from_remote(handle, pkt,
-                             ENetAddressToEndPoint(event.peer->address));
+  auto opaque = std::get<1>(enet_peer_map_[peer_handle]);
+  on_get_message_from_remote(peer_handle, pkt,
+                             ENetAddressToEndPoint(event.peer->address), opaque);
 }
 
 void NetworkService::on_disconnect(uint32_t handle, ENetHost &host,
                                    const ENetEvent &event) {
   UNUSED(handle);
-  uint32_t peer_handle = *static_cast<uint32_t *>(event.peer->data);
-  delete static_cast<uint32_t *>(event.peer->data);
+  uint32_t peer_handle = reinterpret_cast<uint32_t>(event.peer->data);
   DLOG(INFO) << "on_disconnect " << peer_handle << " " << &host << " "
              << event.peer;
   enet_peer_reset(event.peer);
@@ -195,12 +195,12 @@ void NetworkService::on_disconnect(uint32_t handle, ENetHost &host,
     // active close don't notify, already removed, is ok
   } else {
     // passive close
-    auto conn = connection_map_[peer_handle];
-    DLOG(INFO) << "passive close " << peer_handle << " " << conn.opaque;
+    auto opaque = std::get<1>(enet_peer_map_[peer_handle]);
+    DLOG(INFO) << "passive close " << peer_handle << " " << opaque;
     forward_event_message(NetworkServiceMessageType::NET_MSG_TYPE_CLOSE,
-                          conn.opaque, peer_handle,
+		opaque, peer_handle,
                           ENetAddressToEndPoint(event.peer->address));
-    connection_map_.erase(peer_handle); // cleanup
+	enet_peer_map_.erase(peer_handle);
   }
 }
 
@@ -216,8 +216,12 @@ light::utils::ErrorCode NetworkService::fini() {
 void NetworkService::create_tcp_server(
     const light::network::INetEndPoint &endpoint, int backlog,
     network_service_callback_t func, uint32_t opaque) { /*{{{*/
-  light::network::Acceptor *acceptor =
-      new light::network::Acceptor(get_looper());
+	std::shared_ptr<light::network::Acceptor> acceptor(new light::network::Acceptor(get_looper()), [](light::network::Acceptor *acc)
+	{
+		acc->close();
+		delete acc;
+	});
+      
   auto ec = acceptor->open(endpoint.get_protocol());
   if (!ec.ok())
     func(ec, 0);
@@ -233,7 +237,7 @@ void NetworkService::create_tcp_server(
 
   uint32_t key = ++last_socket_id_;
   key |= (CONN_TYPE_TCP_SERVER << CONN_TYPE_SHIFT);
-  connection_map_[key] = ConnectionContainer(acceptor, opaque);
+  acceptor_map_[key] = ConnectionContainer<light::network::Acceptor>(acceptor, opaque);
   acceptor->set_accept_handler(
       [this, opaque](const light::utils::ErrorCode &aec, int fd) {
         if (aec.ok()) {
@@ -269,18 +273,20 @@ void NetworkService::create_udp_server(
 
   uint32_t key = ++last_socket_id_;
   key |= (CONN_TYPE_UDP_SERVER << CONN_TYPE_SHIFT);
-  connection_map_[key] = ConnectionContainer(server, opaque);
-  all_enet_hosts_[key] = server;
+  std::shared_ptr<ENetHost> enet_host(server, [this](ENetHost* h)
+  {
+	  enet_host_destroy(h);
+  });
+  enet_host_map_[key] = ConnectionContainer<ENetHost>(enet_host, opaque);
   DLOG(INFO) << "create_udp_server " << key;
   func(LS_OK_ERROR(), key);
 } /*}}}*/
 
 void NetworkService::on_get_message_from_remote(
     uint32_t handle, const CommonPacket &pkt,
-    const light::network::INetEndPoint &endpoint) {
-  auto conn = connection_map_[handle];
+    const light::network::INetEndPoint &endpoint, uint32_t opaque) {
   forward_data_message(NetworkServiceMessageType::NET_MSG_TYPE_DATA,
-                       conn.opaque, handle, pkt, endpoint);
+                       opaque, handle, pkt, endpoint);
 }
 
 void NetworkService::async_read_tcp_connection(
@@ -296,9 +302,9 @@ void NetworkService::async_read_tcp_connection(
           pkt.size = bytes_read;
           pkt.destroy = [this, buf]() { fixed_alloc_.dealloc(buf); };
           pkt.handle = handle;
-
+		  auto opaque = tcp_connection_map_[handle].opaque;
           this->on_get_message_from_remote(handle, pkt,
-                                           get_tcp_peer_endpoint(conn));
+                                           get_tcp_peer_endpoint(conn), opaque);
           this->async_read_tcp_connection(conn, handle);
         } else {
           handle_tcp_error(handle, ec);
@@ -308,18 +314,18 @@ void NetworkService::async_read_tcp_connection(
 
 void NetworkService::handle_tcp_error(uint32_t handle,
                                       const light::utils::ErrorCode &ec) {
-  auto conn = connection_map_[handle];
+  auto conn = tcp_connection_map_[handle];
   forward_error_message(NetworkServiceMessageType::NET_MSG_TYPE_EXECPTION,
                         conn.opaque, handle, ec,
-                        get_tcp_peer_endpoint(conn.tcp_conn));
+                        get_tcp_peer_endpoint(conn.ptr.get()));
   internal_close(handle, false);
 }
 
 void NetworkService::handle_tcp_close(uint32_t handle) {
-  auto conn = connection_map_[handle];
+  auto conn = tcp_connection_map_[handle];
   forward_event_message(NetworkServiceMessageType::NET_MSG_TYPE_CLOSE,
                         conn.opaque, handle,
-                        get_tcp_peer_endpoint(conn.tcp_conn));
+                        get_tcp_peer_endpoint(conn.ptr.get()));
   internal_close(handle, false);
 }
 
@@ -328,7 +334,11 @@ NetworkService::install_tcp_connection(int sockfd, uint32_t opaque) {
   uint32_t key = ++last_socket_id_;
   key |= (CONN_TYPE_TCP_CLIENT << CONN_TYPE_SHIFT);
   auto conn = new light::network::TcpConnection(get_looper(), sockfd);
-  connection_map_[key] = ConnectionContainer(conn, opaque);
+  tcp_connection_map_[key] = ConnectionContainer<light::network::TcpConnection>(std::shared_ptr<light::network::TcpConnection>(conn, [](light::network::TcpConnection *p)
+  {
+	  p->close();
+	  delete p;
+  }), opaque);
   this->async_read_tcp_connection(conn, key);
   conn->set_error_callback([conn, this, key]() {
     auto ec = conn->get_last_error();
@@ -380,8 +390,11 @@ void NetworkService::create_udp_stub(int max_peer, int max_channel,
 
   uint32_t key = ++last_socket_id_;
   key |= (CONN_TYPE_UDP_SERVER << CONN_TYPE_SHIFT);
-  connection_map_[key] = ConnectionContainer(client, opaque);
-  all_enet_hosts_[key] = client;
+  std::shared_ptr<ENetHost> enet_host(client, [](ENetHost *c)
+  {
+	  enet_host_destroy(c);
+  });
+  enet_host_map_[key] = ConnectionContainer<ENetHost>(enet_host, opaque);
   func(LS_OK_ERROR(), key);
 } /*}}}*/
 
@@ -389,8 +402,8 @@ void NetworkService::connect_udp_server(
     const light::network::INetEndPoint &point, uint64_t micro_sec,
     int32_t stub_id, int channels, network_service_callback_t func,
     uint32_t opaque) { /*{{{*/
-  auto host = connection_map_.find(stub_id);
-  if (host == connection_map_.end()) {
+  auto host = enet_host_map_.find(stub_id);
+  if (host == enet_host_map_.end()) {
     func(LS_GENERIC_ERR_OBJ(invalid_argument), 0);
   }
 
@@ -399,7 +412,7 @@ void NetworkService::connect_udp_server(
   address.host = point.get_addr_int();
   address.port = point.get_port();
   ++last_callback_idx_;
-  peer = enet_host_connect(host->second.udp_host, &address, channels,
+  peer = enet_host_connect(host->second.ptr.get(), &address, channels,
                            last_callback_idx_);
   if (peer == nullptr) {
     func(LS_GENERIC_ERR_OBJ(too_many_files_open), 0);
@@ -428,36 +441,25 @@ void NetworkService::internal_close(uint32_t handle,
                                     bool active_close) { /*{{{*/
   if (!check_handle_exists(handle))
     return;
-  auto conn = connection_map_[handle];
   switch (GET_CONN_TYPE(handle)) {
   case CONN_TYPE_TCP_SERVER: {
-    light::network::Acceptor *acpt = conn.tcp_host;
-    acpt->close();
-    delete acpt;
-    connection_map_.erase(handle);
+	 acceptor_map_.erase(handle);
   } break;
 
   case CONN_TYPE_UDP_SERVER: {
-    ENetHost *host = conn.udp_host;
-    enet_host_destroy(host);
-    connection_map_.erase(handle);
-    all_enet_hosts_.erase(handle);
+	 enet_host_map_.erase(handle);
   } break;
 
   case CONN_TYPE_TCP_CLIENT: {
-    light::network::TcpConnection *tconn = conn.tcp_conn;
-    tconn->close();
-    delete tconn;
-    connection_map_.erase(handle);
+	 tcp_connection_map_.erase(handle);
   } break;
 
   case CONN_TYPE_UDP_CLIENT: {
-    ENetPeer *peer = conn.udp_conn;
+    ENetPeer *peer = std::get<0>(enet_peer_map_[handle]);
     enet_peer_disconnect(peer, 0);
     if (active_close) {
-      DLOG(INFO) << "active handle: " << handle;
       active_close_handlers_.insert(handle);
-      connection_map_.erase(handle);
+	  enet_peer_map_.erase(handle);
     }
 
   } break;
@@ -481,8 +483,8 @@ void NetworkService::send_common_packet(const CommonPacket &packet,
 
   switch (GET_CONN_TYPE(packet.handle)) {
   case CONN_TYPE_TCP_CLIENT: {
-    auto conn = connection_map_[packet.handle];
-    conn.tcp_conn->async_write(packet.data, packet.size,
+    auto conn = tcp_connection_map_[packet.handle];
+    conn.ptr->async_write(packet.data, packet.size,
                                [packet] { packet.destroy(); });
   } break;
   case CONN_TYPE_UDP_CLIENT: {
@@ -499,7 +501,7 @@ void NetworkService::send_common_packet(const CommonPacket &packet,
       delete cp;
     };
 
-    ENetPeer *peer = connection_map_[packet.handle].udp_conn;
+    ENetPeer *peer = std::get<0>(enet_peer_map_[packet.handle]);
     enet_peer_send(peer, channel, enet_pkt);
 
   } break;
@@ -510,8 +512,18 @@ void NetworkService::send_common_packet(const CommonPacket &packet,
 } /*}}}*/
 
 bool NetworkService::check_handle_exists(uint32_t handle) {
-  return connection_map_.find(handle) != connection_map_.end();
+  switch(GET_CONN_TYPE(handle))
+  {
+  case CONN_TYPE_TCP_CLIENT:
+	  return tcp_connection_map_.find(handle) != tcp_connection_map_.end();
+  case CONN_TYPE_UDP_CLIENT:
+	  return enet_peer_map_.find(handle) != enet_peer_map_.end();
+  case CONN_TYPE_TCP_SERVER:
+	  return acceptor_map_.find(handle) != acceptor_map_.end();
+  case CONN_TYPE_UDP_SERVER:
+	  return enet_host_map_.find(handle) != enet_host_map_.end();
+  }
+  return false;
 }
-
 } /* core */
 } /* light */

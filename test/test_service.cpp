@@ -9,11 +9,13 @@ using namespace light::network;
 
 class Shuttle : public MessageHandler {
 public:
-  Shuttle(NetworkService &ns) : MessageHandler(), ns_(&ns) {}
+  Shuttle(Context &ctx) : MessageHandler(), ns_(new NetworkService(ctx)) {}
+
   virtual light::utils::ErrorCode init() {
     DLOG(INFO) << "shuttle inited!";
     return LS_OK_ERROR();
   }
+
 
   virtual void on_install() {
     DLOG(INFO) << "shuttle installed!";
@@ -118,16 +120,16 @@ public:
   virtual void fini() { DLOG(INFO) << "shuttle finalize!"; }
 
 private:
-  NetworkService *ns_;
+  std::unique_ptr<NetworkService> ns_;
 };
 
 TEST(Service, demo) {
   Context ctx;
 
-  std::shared_ptr<NetworkService> ptr =
-      DefaultContextLoader::instance().require_service<NetworkService>(
-          "network", "shuttle-network", ctx);
-  Shuttle shuttle(*ptr);
+//  std::shared_ptr<NetworkService> ptr =
+//      DefaultContextLoader::instance().require_service<NetworkService>(
+//          "network", "shuttle-network", ctx);
+  Shuttle shuttle(ctx);
   ctx.install_handler(shuttle);
 
   light::utils::ErrorCode ec;
