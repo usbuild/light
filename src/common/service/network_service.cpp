@@ -131,6 +131,7 @@ void NetworkService::forward_event_message(
 uint32_t NetworkService::install_udp_connection(uint32_t host_handle,
                                                 ENetPeer *peer,
                                                 uint32_t opaque) {
+	UNUSED(host_handle);
   uint32_t key = ++last_socket_id_;
   key |= (CONN_TYPE_UDP_CLIENT << CONN_TYPE_SHIFT);
 
