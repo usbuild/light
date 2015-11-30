@@ -5,6 +5,7 @@ namespace network {
 TcpClient::TcpClient(Looper &looper) : TcpSocket(), looper_(&looper) {}
 
 TcpClient::~TcpClient() {
+	DLOG(INFO) << __FUNCTION__ << " " << this;
   if (dispatcher_) {
     dispatcher_->detach();
   }

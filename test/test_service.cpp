@@ -9,7 +9,9 @@ using namespace light::network;
 
 class Shuttle : public MessageHandler {
 public:
-  Shuttle(Context &ctx) : MessageHandler(), ns_(new NetworkService(ctx)) {}
+  Shuttle(Context &ctx) : MessageHandler(), ns_(new NetworkService(ctx)) {
+		ns_->init();
+	}
 
   virtual light::utils::ErrorCode init() {
     DLOG(INFO) << "shuttle inited!";
@@ -19,6 +21,7 @@ public:
 
   virtual void on_install() {
     DLOG(INFO) << "shuttle installed!";
+#if 1
     ns_->post<NetworkService>(
         &NetworkService::create_udp_server, INetEndPoint(protocol::v4(), 8889),
         5, 16, ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
@@ -44,7 +47,7 @@ public:
                       pkt.data = data;
                       pkt.size = 100;
                       pkt.destroy = [data] { delete[] data; };
-                      DLOG(INFO) << "send udp packet";
+                      DLOG(INFO) << "send udp packet " << handle;
                       ns_->post<NetworkService>(
                           &NetworkService::send_common_packet, pkt, true, 0);
                       light::utils::ErrorCode ec2;
@@ -59,6 +62,7 @@ public:
               id_);
         }),
         id_);
+#endif
 
 #if 1
     ns_->post<NetworkService>(
@@ -72,7 +76,7 @@ public:
               INetEndPoint("127.0.0.1", 8890), 5000000LL,
               ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
                                              uint32_t handle) {
-                DLOG(INFO) << "connect_tcp_server " << ec.message();
+                DLOG(INFO) << "connect_tcp_server " << ec.message() << " handle " << handle;
                 CommonPacket pkt;
                 pkt.handle = handle;
                 char *data = new char[100]{0};
@@ -83,7 +87,7 @@ public:
                   delete[] data;
                   DLOG(INFO) << "packet sent";
                 };
-                DLOG(INFO) << "send packet";
+                DLOG(INFO) << "send packet " << handle;
                 ns_->post<NetworkService>(&NetworkService::send_common_packet,
                                           pkt, true, 0);
               }),
@@ -135,7 +139,9 @@ TEST(Service, demo) {
   light::utils::ErrorCode ec;
   ctx.get_looper().add_timer(ec, 3000000LL, 0,
                              [&ctx] { ctx.get_looper().stop(); });
+	ctx.get_looper().loop();
 
+	/*
   const int main_thread_num = 4;
   std::thread *ths = new std::thread[main_thread_num];
   for (int i = 0; i < main_thread_num; ++i) {
@@ -145,4 +151,5 @@ TEST(Service, demo) {
     ths[i].join();
   }
   delete[] ths;
+	*/
 }

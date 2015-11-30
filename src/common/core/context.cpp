@@ -1,6 +1,9 @@
 #include "core/context.h"
 namespace light {
 namespace core {
+Context::~Context () {
+	DLOG(INFO) << __FUNCTION__ << " " << this;
+}
 
 void Context::install_handler(MessageHandler &mh) {
   mh.set_id(++last_handler_id_);

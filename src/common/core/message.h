@@ -49,6 +49,7 @@ public:
     to = 0;
     type = 0;
     data = nullptr;
+		size = 0;
 
     destroy = nullptr;
   }

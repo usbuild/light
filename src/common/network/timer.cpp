@@ -26,6 +26,9 @@ bool Timer::forward() {
     return false;
   triggered_ = true;
 
+	if (get_timer_id() != 1)
+	DLOG(INFO) << "forward " << get_timer_id();
+
   if (expire_callback_) {
     expire_callback_();
   }
@@ -51,7 +54,7 @@ TimerId TimerQueue::add_timer(Timestamp expire_time, Timestamp interval,
 void TimerQueue::del_timer(TimerId timer_id, bool &need_update) {
   need_update = false;
   auto itr = timer_id_map_.find(timer_id);
-  if (itr != timer_id_map_.end()) {
+  if (itr == timer_id_map_.end()) {
     return;
   }
   auto timer = itr->second->second;

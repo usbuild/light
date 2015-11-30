@@ -16,8 +16,8 @@ typedef int socket_handle_t;
 
 struct CommonPacket {
   light::core::mq_handler_id_t handle;
-  char *data;
-  size_t size;
+  char *data = nullptr;
+  size_t size = 0;
   std::function<void()> destroy;
 };
 
@@ -53,6 +53,7 @@ public:
 public:
   NetworkService(light::core::Context &ctx);
   NetworkService(light::network::Looper &looper, light::core::MessageQueue &mq);
+	~NetworkService();
 
   light::utils::ErrorCode init();
 
@@ -85,7 +86,7 @@ public:
    * @param packet 传输的packet
    * @param reliable 是否是可靠的包，仅针对UDP
    */
-  void send_common_packet(const CommonPacket &packet, bool reliable,
+  void send_common_packet(CommonPacket packet, bool reliable,
                           int channel = 0);
 
 private:

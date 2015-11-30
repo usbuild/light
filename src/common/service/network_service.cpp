@@ -39,6 +39,10 @@ NetworkService::NetworkService(light::network::Looper &looper,
     : Service(looper, mq), last_socket_id_(0), last_callback_idx_(0),
       loop_idx_(0) {}
 
+NetworkService::~NetworkService() {
+	DLOG(INFO) << __FUNCTION__ << " " << this;
+}
+
 light::utils::ErrorCode NetworkService::init() {
   if (enet_initialize() != 0) {
     DLOG(FATAL) << "An error occured while initializing ENet";
@@ -57,6 +61,7 @@ void NetworkService::on_loop() {
     if (enet_host_service(kv.second.ptr.get(), &event, 0) > 0) {
       switch (event.type) {
       case ENET_EVENT_TYPE_CONNECT:
+				DLOG(INFO) << "conn host service";
         on_connect(kv.first, *kv.second.ptr, event);
         break;
       case ENET_EVENT_TYPE_RECEIVE:
@@ -169,13 +174,15 @@ void NetworkService::on_receive(uint32_t handle, ENetHost &host,
                                 const ENetEvent &event) {
   UNUSED(handle);
   DLOG(INFO) << "receive data " << &host << " " << event.peer->data;
-  uint32_t peer_handle = reinterpret_cast<uint32_t>(event.peer->data);
+  uint32_t peer_handle = reinterpret_cast<uintptr_t>(event.peer->data);
   CommonPacket pkt;
   auto packet = event.packet;
   pkt.data = reinterpret_cast<char *>(packet->data);
   pkt.size = packet->dataLength;
   pkt.handle = peer_handle;
-  pkt.destroy = [packet]() { enet_packet_destroy(packet); };
+  pkt.destroy = [packet]() {
+		enet_packet_destroy(packet);
+	};
   auto opaque = std::get<1>(enet_peer_map_[peer_handle]);
   on_get_message_from_remote(peer_handle, pkt,
                              ENetAddressToEndPoint(event.peer->address), opaque);
@@ -184,7 +191,7 @@ void NetworkService::on_receive(uint32_t handle, ENetHost &host,
 void NetworkService::on_disconnect(uint32_t handle, ENetHost &host,
                                    const ENetEvent &event) {
   UNUSED(handle);
-  uint32_t peer_handle = reinterpret_cast<uint32_t>(event.peer->data);
+  uint32_t peer_handle = reinterpret_cast<uintptr_t>(event.peer->data);
   DLOG(INFO) << "on_disconnect " << peer_handle << " " << &host << " "
              << event.peer;
   enet_peer_reset(event.peer);
@@ -300,7 +307,9 @@ void NetworkService::async_read_tcp_connection(
           CommonPacket pkt;
           pkt.data = buf;
           pkt.size = bytes_read;
-          pkt.destroy = [this, buf]() { fixed_alloc_.dealloc(buf); };
+          pkt.destroy = [this, buf]() {
+						fixed_alloc_.dealloc(buf);
+					};
           pkt.handle = handle;
 		  auto opaque = tcp_connection_map_[handle].opaque;
           this->on_get_message_from_remote(handle, pkt,
@@ -351,7 +360,7 @@ NetworkService::install_tcp_connection(int sockfd, uint32_t opaque) {
 void NetworkService::connect_tcp_server(
     const light::network::INetEndPoint &point, uint64_t micro_sec,
     network_service_callback_t func, uint32_t opaque) { /*{{{*/
-  light::network::TcpClient *tcp_client =
+	auto tcp_client = 
       new light::network::TcpClient(get_looper());
   auto tmp_ec = tcp_client->open(point.get_protocol());
   if (!tmp_ec.ok()) {
@@ -361,18 +370,16 @@ void NetworkService::connect_tcp_server(
   tcp_client->async_connect(
       point,
       [this, tcp_client, func, opaque](const light::utils::ErrorCode &ec) {
+				uint32_t key = 0;
         if (ec.ok()) {
-          uint32_t key;
           light::network::TcpConnection *conn;
           std::tie(key, conn) =
               install_tcp_connection(tcp_client->get_sockfd(), opaque);
-          func(LS_OK_ERROR(), key);
-        } else {
-          func(ec, 0);
         }
-        // may be dangerous, but now ok, after all called, tcp_client is not
-        // touched
-        delete tcp_client;
+				// may be dangerous, but now ok, after all called, tcp_client is not
+				// touched
+				func(ec, key);
+				delete tcp_client;
       },
       micro_sec);
 } /*}}}*/
@@ -402,6 +409,7 @@ void NetworkService::connect_udp_server(
     const light::network::INetEndPoint &point, uint64_t micro_sec,
     int32_t stub_id, int channels, network_service_callback_t func,
     uint32_t opaque) { /*{{{*/
+	DLOG(INFO) << __FUNCTION__ << " " << this;
   auto host = enet_host_map_.find(stub_id);
   if (host == enet_host_map_.end()) {
     func(LS_GENERIC_ERR_OBJ(invalid_argument), 0);
@@ -474,10 +482,10 @@ void NetworkService::internal_close(uint32_t handle,
  * @param packet 传输的packet
  * @param reliable 是否是可靠的包，仅针对UDP
  */
-void NetworkService::send_common_packet(const CommonPacket &packet,
+void NetworkService::send_common_packet(CommonPacket packet,
                                         bool reliable, int channel) { /*{{{*/
   if (!check_handle_exists(packet.handle)) {
-    DLOG(FATAL) << "handle not exists handle_id: " << packet.handle;
+    LOG(FATAL) << "handle not exists handle_id: " << packet.handle;
     return;
   }
 

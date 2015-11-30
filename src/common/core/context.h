@@ -3,11 +3,13 @@
 #include "network/looper.h"
 namespace light {
 namespace core {
-class Context {
+class Context final : public light::utils::NonCopyable {
 public:
   Context()
       : looper_(new light::network::Looper), mq_(new light::core::MessageQueue),
         last_handler_id_(1000) {}
+
+	~Context ();
 
   inline light::network::Looper &get_looper() const { return *looper_; }
 

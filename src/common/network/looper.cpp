@@ -43,6 +43,12 @@ Looper::Looper()
     // update nearist timer
     update_timerfd_expire();
   });
+
+  this->add_timer(ec, 1000, 1000, [this] {
+    for (auto &kv : loop_callbacks_) {
+      kv.second();
+    }
+  });
 #endif
 
 #ifdef HAVE_EVENTFD
@@ -76,11 +82,6 @@ Looper::Looper()
     ::recv(eventfd, buf, 128, 0);
   });
 
-  this->add_timer(ec, 1000, 1000, [this] {
-    for (auto &kv : loop_callbacks_) {
-      kv.second();
-    }
-  });
 #endif
   commit = true;
 }
