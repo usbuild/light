@@ -27,8 +27,8 @@ TEST(Socket, demo) { /*{{{*/
                     "Accept: */*\r\n\r\n");
   ssize_t size = socket.write(ec, hello.data(), hello.size());
   char buf[1024] = {0};
-  socket.read(ec, buf, 1024);
-  DLOG(INFO) << buf;
+  socket.read(ec, buf, 1023);
+	DLOG(INFO) << buf;
 } /*}}}*/
 
 class EchoConnection {/*{{{*/
@@ -111,7 +111,7 @@ TEST(TcpClient, accept) { /*{{{*/
           conn->async_write(wbuf, hello.size(), [] { EXPECT_TRUE(true); });
           ::memset(buf, 0, 1024);
           conn->async_read_some(
-              buf, 1024, [buf, &looper](const light::utils::ErrorCode &ec,
+              buf, 1024, [buf, &looper, conn, wbuf](const light::utils::ErrorCode &ec,
                                         int bytes_transferred) {
                 DLOG(INFO) << ec.message();
                 UNUSED(ec);
@@ -119,6 +119,9 @@ TEST(TcpClient, accept) { /*{{{*/
                 DLOG(INFO) << buf;
                 EXPECT_TRUE(true);
                 looper.stop();
+								delete conn;
+								delete buf;
+								delete wbuf;
               });
         } else {
           EXPECT_TRUE(false);

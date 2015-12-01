@@ -18,12 +18,14 @@ void set_log_level(int level);
 class LocalLoggerProxy {
 
 public:
-  explicit LocalLoggerProxy(bool priority) : dummy_(priority), ss_() {}
+  explicit LocalLoggerProxy(bool priority) : dummy_(priority), ss_() {
+	}
 
 public:
   template <typename T> LocalLoggerProxy &operator<<(const T &t) {
-    if (!dummy_)
+    if (!dummy_) {
       ss_ << t;
+		}
     return *this;
   }
 
