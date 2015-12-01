@@ -26,9 +26,6 @@ bool Timer::forward() {
     return false;
   triggered_ = true;
 
-	if (get_timer_id() != 1)
-	DLOG(INFO) << "forward " << get_timer_id();
-
   if (expire_callback_) {
     expire_callback_();
   }

@@ -159,7 +159,7 @@ private:
   uint32_t last_socket_id_;
   uint32_t last_callback_idx_;
   int loop_idx_;
-  light::utils::FixedAllocator<2 * 1024> fixed_alloc_;
+  static light::utils::FixedAllocator<2 * 1024> fixed_alloc_;
   std::set<uint32_t> active_close_handlers_;
 };
 

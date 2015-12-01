@@ -24,7 +24,6 @@ public:
 public:
   FixedAllocator() : free_list_(nullptr), free_count_(0) {}
   char *alloc() {
-		return reinterpret_cast<char*>(new FixedMemNode<N>());
     std::lock_guard<std::mutex> lock_guard(lock_);
     if (free_list_ == nullptr) {
       free_list_ = new FixedMemNode<N>();
@@ -37,8 +36,6 @@ public:
   }
 
   void dealloc(char *data) {
-		delete reinterpret_cast<FixedMemNode<N> *>(data);
-		return;
     std::lock_guard<std::mutex> lock_guard(lock_);
     FixedMemNode<N> *node = reinterpret_cast<FixedMemNode<N> *>(data);
     node->next = free_list_;

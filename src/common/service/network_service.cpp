@@ -13,6 +13,8 @@ namespace service {
 
 #define GET_CONN_TYPE(key) (key >> CONN_TYPE_SHIFT)
 
+light::utils::FixedAllocator<2 * 1024> NetworkService::fixed_alloc_;
+
 static light::network::INetEndPointIpV4
 ENetAddressToEndPoint(const ENetAddress &addr) {
   light::network::INetEndPointIpV4 v4;
@@ -300,17 +302,18 @@ void NetworkService::on_get_message_from_remote(
 void NetworkService::async_read_tcp_connection(
     light::network::TcpConnection *conn, uint32_t handle) {
   // use fixed allocator
-  char *buf = fixed_alloc_.alloc(); // 2M
+	std::shared_ptr<char> buf_ptr(fixed_alloc_.alloc(), [this](char *buf){
+				fixed_alloc_.dealloc(buf);
+		}); // 2M
+
   conn->async_read_some(
-      buf, fixed_alloc_.node_size(),
-      [this, conn, handle, buf](light::utils::ErrorCode ec, size_t bytes_read) {
+      buf_ptr.get(), fixed_alloc_.node_size(),
+      [this, conn, handle, buf_ptr](light::utils::ErrorCode ec, size_t bytes_read) {
+				char *buf = buf_ptr.get();
         if (ec.ok()) {
           CommonPacket pkt;
           pkt.data = buf;
           pkt.size = bytes_read;
-          pkt.destroy = [this, buf]() {
-						fixed_alloc_.dealloc(buf);
-					};
           pkt.handle = handle;
 		  auto opaque = tcp_connection_map_[handle].opaque;
           this->on_get_message_from_remote(handle, pkt,
