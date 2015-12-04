@@ -66,8 +66,8 @@ private:
   Looper *looper_;
   std::unique_ptr<TcpConnection> conn_;
   bool close_;
-  char wbuf_[1024];
-  char rbuf_[1024];
+  char wbuf_[1025];
+  char rbuf_[1025];
 }; /*}}}*/
 
 TEST(Acceptor, accept) { /*{{{*/
@@ -93,8 +93,8 @@ TEST(TcpClient, accept) { /*{{{*/
   TcpClient tcp_client(looper);
   tcp_client.open(protocol::v4());
 
-  char *buf = new char[1024];
-  char *wbuf = new char[1024];
+  char *buf = new char[1025];
+  char *wbuf = new char[1025];
   
   TcpConnection *conn = nullptr;
   tcp_client.async_connect(
@@ -110,7 +110,7 @@ TEST(TcpClient, accept) { /*{{{*/
                             "Accept: */*\r\n\r\n");
           ::memcpy(wbuf, hello.data(), hello.size());
           conn->async_write(wbuf, hello.size(), [] { EXPECT_TRUE(true); });
-          ::memset(buf, 0, 1024);
+          ::memset(buf, 0, 1025);
           conn->async_read_some(
               buf, 1024, [buf, &looper, conn, wbuf](const light::utils::ErrorCode &ec,
                                         int bytes_transferred) {
@@ -120,9 +120,9 @@ TEST(TcpClient, accept) { /*{{{*/
                 DLOG(INFO) << buf;
                 EXPECT_TRUE(true);
                 looper.stop();
-				delete[]buf;
-				delete[]wbuf;
-				delete conn;
+				        delete[]buf;
+				        delete[]wbuf;
+				        delete conn;
               });
         } else {
           EXPECT_TRUE(false);

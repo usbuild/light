@@ -1,4 +1,5 @@
 INCLUDE (ExternalProject)
+INCLUDE (CTest)
 
 ExternalProject_Add(gtest_gmock_src
 	GIT_REPOSITORY https://github.com/google/googletest.git
@@ -22,6 +23,12 @@ ENDIF()
 TARGET_LINK_LIBRARIES (unit_test gtest gtest_main gmock gmock_main lightserver_common enet ${PTHREAD})
 
 ADD_DEPENDENCIES (unit_test gtest_gmock_src ${LIB_DEP})
+
+IF(UNIX)
+	FIND_PROGRAM(CTEST_MEMORYCHECK_COMMAND NAMES valgrind)
+	SET(CTEST_MEMORYCHECK_COMMAND_OPTIONS, "--trace-children=yes --leak-check=full --track-origins=yes")
+ENDIF()
+
 ADD_TEST(all ${CMAKE_BINARY_DIR}/test/unit_test${CMAKE_EXECUTABLE_SUFFIX})
 
 IF(NOT WIN32)

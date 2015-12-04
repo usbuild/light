@@ -16,9 +16,12 @@ TEST(Handler, test) {
   // Shuttle
   // shuttle(*dynamic_cast<NetworkService*>(DefaultContextLoader::instance().require_service("network",
   // "shuttle-network", ctx)));
+	/*
   auto network_service =
       DefaultContextLoader::instance().require_service<NetworkService>(
           "network", "station-network", ctx);
+					*/
+	std::shared_ptr<NetworkService> network_service = std::make_shared<NetworkService>(ctx);
   int station_id = 5;
   auto station_handler =
       DefaultContextLoader::instance().require_handler<Station>(
