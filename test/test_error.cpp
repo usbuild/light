@@ -95,6 +95,7 @@ TEST(TcpClient, accept) { /*{{{*/
 
   char *buf = new char[1024];
   char *wbuf = new char[1024];
+  
   TcpConnection *conn = nullptr;
   tcp_client.async_connect(
       INetEndPoint("93.184.216.34", 80),
@@ -119,9 +120,9 @@ TEST(TcpClient, accept) { /*{{{*/
                 DLOG(INFO) << buf;
                 EXPECT_TRUE(true);
                 looper.stop();
-								delete conn;
-								delete buf;
-								delete wbuf;
+				delete[]buf;
+				delete[]wbuf;
+				delete conn;
               });
         } else {
           EXPECT_TRUE(false);
