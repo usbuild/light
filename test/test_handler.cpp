@@ -10,7 +10,6 @@ using namespace light::utils;
 using namespace light::handler;
 using namespace light::service;
 TEST(Handler, test) {
-	return ;
   Context ctx;
 
   // Shuttle
@@ -21,17 +20,17 @@ TEST(Handler, test) {
       DefaultContextLoader::instance().require_service<NetworkService>(
           "network", "station-network", ctx);
 					*/
-	std::shared_ptr<NetworkService> network_service = std::make_shared<NetworkService>(ctx);
+  std::shared_ptr<NetworkService> network_service = std::make_shared<NetworkService>(ctx);
   int station_id = 5;
   auto station_handler =
-      DefaultContextLoader::instance().require_handler<Station>(
+      DefaultContextLoader::instance().require_handler<Station>(ctx, 
           "station", "station1", station_id, INetEndPoint(protocol::v4(), 8889),
           network_service);
   ctx.install_handler(*station_handler);
 
   auto station_id2 = 6;
   auto station_handler2 =
-      DefaultContextLoader::instance().require_handler<Station>(
+      DefaultContextLoader::instance().require_handler<Station>(ctx,
           "station", "station2", station_id2,
           INetEndPoint(protocol::v4(), 8890), network_service);
   ctx.install_handler(*station_handler2);
@@ -41,11 +40,11 @@ TEST(Handler, test) {
     station_handler2->connect_to_station(INetEndPoint("127.0.0.1", 8889));
   });
   auto lua_service =
-      DefaultContextLoader::instance().require_service<LuaService>(
+      DefaultContextLoader::instance().require_service<LuaService>(ctx,
           "luaservice", "luaservice", ctx);
 
   // lua_service->post
-  lua_service->install_new_handler(LUA_TEST_DIR "test.lua", "aluahandler", "");
+  lua_service->install_new_handler(ctx, LUA_TEST_DIR "test.lua", "aluahandler", "");
 
   ctx.get_looper().add_timer(ec, 5000000LL, 0,
                              [&ctx] { ctx.get_looper().stop(); });

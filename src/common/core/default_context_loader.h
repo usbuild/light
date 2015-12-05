@@ -11,12 +11,12 @@ public:
   }
 
   template <typename T, typename... ARGS>
-  std::shared_ptr<T> require_handler(const std::string &handle_class_name,
+  std::shared_ptr<T> require_handler(Context &ctx, const std::string &handle_class_name,
                                      const std::string &name, ARGS &&... args) {
     UNUSED(handle_class_name);
     std::shared_ptr<MessageHandler> mh;
-    if (has_handler(name)) {
-      mh = get_handler(name);
+    if (ctx.has_handler(name)) {
+      mh = ctx.get_handler(name);
     } else {
       T *t = new T(std::forward<ARGS>(args)...);
       if (t == nullptr) {
@@ -31,18 +31,18 @@ public:
       if (!mh) {
         return nullptr;
       }
-      add_handler(name, mh);
+      ctx.add_handler(name, mh);
     }
     return std::dynamic_pointer_cast<T>(mh);
   }
 
   template <typename T, typename... ARGS>
-  std::shared_ptr<T> require_service(const std::string &service_class_name,
+  std::shared_ptr<T> require_service(Context &ctx, const std::string &service_class_name,
                                      const std::string &name, ARGS &&... args) {
     UNUSED(service_class_name);
     std::shared_ptr<Service> svc;
-    if (has_service(name)) {
-      svc = get_service(name);
+    if (ctx.has_service(name)) {
+      svc = ctx.get_service(name);
     } else {
       T *t = new T(std::forward<ARGS>(args)...);
       if (t == nullptr) {
@@ -57,7 +57,7 @@ public:
       if (!svc) {
         return nullptr;
       }
-      add_service(name, svc);
+      ctx.add_service(name, svc);
     }
     return std::dynamic_pointer_cast<T>(svc);
   }

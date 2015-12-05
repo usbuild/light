@@ -18,6 +18,9 @@ struct PartialPacketMessage {
     light::core::PackedMessage pm;
     char buf[sizeof(light::core::PackedMessage)];
   };
+  ~PartialPacketMessage() {
+    if (data) delete[]data;
+  }
   char *data = nullptr;
   uint32_t read_size = 0;
 

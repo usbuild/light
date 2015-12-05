@@ -74,6 +74,7 @@ light::service::CommonPacket Station::generate_network_packet(
   light::service::CommonPacket pkt;
   pkt.size = fbb.GetSize() + sizeof(pmc_t);
   pkt.data = new char[pkt.size];
+  ::memset(pkt.data, 0, pkt.size);
   pkt.handle = handle;
 
   pmc_t *pmsg = reinterpret_cast<pmc_t *>(pkt.data);

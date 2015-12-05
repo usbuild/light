@@ -10,13 +10,13 @@ LuaService::LuaService(light::core::Context &ctx) : Service(ctx), ctx_(&ctx) {}
 LuaService::~LuaService() {}
 
 light::utils::ErrorCode
-LuaService::install_new_handler(const std::string &file,
+LuaService::install_new_handler(light::core::Context &ctx, const std::string &file,
                                 const std::string &iname,
                                 const std::string &args) {
-  auto lctx = light::handler::LuaContext::new_context();
+  std::shared_ptr<light::handler::LuaContext> lctx(light::handler::LuaContext::new_context());
   auto lua_handler = light::core::DefaultContextLoader::instance()
-                         .require_handler<light::handler::LuaHandler>(
-                             file, iname, *lctx, file, iname, args);
+                         .require_handler<light::handler::LuaHandler>(ctx, 
+                             file, iname, lctx, file, iname, args);
   if (!lua_handler) {
     return LS_GENERIC_ERR_OBJ(not_enough_memory);
   }

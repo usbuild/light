@@ -11,11 +11,8 @@ class LuaService : public light::core::Service {
 public:
   LuaService(light::core::Context &ctx);
   ~LuaService();
-
-  light::utils::ErrorCode install_new_handler(const std::string &file,
-                                              const std::string &name,
-                                              const std::string &args);
-
+  light::utils::ErrorCode install_new_handler(light::core::Context& ctx, const std::string& file, const std::string& iname, const std::string& args);
+  
   light::utils::ErrorCode init() override;
 
   light::utils::ErrorCode fini() override;

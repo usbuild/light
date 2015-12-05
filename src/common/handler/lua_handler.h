@@ -46,9 +46,9 @@ private:
 
 class LuaHandler : public light::core::MessageHandler {
 public:
-  LuaHandler(LuaContext &lua_ctx, const std::string &script_name,
+  LuaHandler(std::shared_ptr<LuaContext> lua_ctx, const std::string &script_name,
              const std::string &name, const std::string &args)
-      : lua_ctx_(&lua_ctx), script_name_(script_name), name_(name),
+      : lua_ctx_(lua_ctx), script_name_(script_name), name_(name),
         args_(args) {}
   virtual ~LuaHandler() {}
 
@@ -123,7 +123,7 @@ public:
   }
 
 private:
-  LuaContext *lua_ctx_;
+  std::shared_ptr<LuaContext> lua_ctx_;
   std::function<void(light::core::light_message_ptr_t msg)> handler_func_;
   std::string script_name_;
   std::string name_;
