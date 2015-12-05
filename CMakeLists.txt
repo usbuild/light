@@ -3,9 +3,8 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8 FATAL_ERROR)
 OPTION (test "Build all tests." ON)
 OPTION (debug "enable debug." ON)
 OPTION (strict "enable strict check." OFF)
-
 ENABLE_TESTING ()
-IF (POLICY CMP0054)
+IF (CMAKE_POLICY)
 CMAKE_POLICY (SET CMP0054 OLD)
 ENDIF()
 
