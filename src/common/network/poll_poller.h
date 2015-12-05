@@ -10,11 +10,11 @@ namespace network {
 
 #define MAX_LOOPER_EVENTS 20
 
-class SelectPoller : public Poller {
+class PollPoller : public Poller {
 public:
-  SelectPoller(Looper &looper);
+  PollPoller(Looper &looper);
 
-  virtual ~SelectPoller();
+  virtual ~PollPoller();
 
   light::utils::ErrorCode
   poll(int timeout, std::unordered_map<int, Dispatcher *> &active_dispatchers);

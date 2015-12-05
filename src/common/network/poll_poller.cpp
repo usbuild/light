@@ -3,19 +3,19 @@
 
 #include <sys/types.h>
 
-#include "network/select_poller.h"
+#include "network/poll_poller.h"
 #include "utils/exception.h"
 
 namespace light {
 namespace network {
 
-SelectPoller::SelectPoller(Looper &looper) : Poller(looper) {}
+PollPoller::PollPoller(Looper &looper) : Poller(looper) {}
 
-SelectPoller::~SelectPoller() {}
+PollPoller::~PollPoller() {}
 
 // millisecs
 light::utils::ErrorCode
-SelectPoller::poll(int timeout,
+PollPoller::poll(int timeout,
                    std::unordered_map<int, Dispatcher *> &active_dispatchers) {
 
   if (fds_.size() == 0) {
@@ -46,7 +46,7 @@ SelectPoller::poll(int timeout,
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode SelectPoller::add_dispatcher(Dispatcher &dispatcher) {
+light::utils::ErrorCode PollPoller::add_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) == dispatchers_.end());
   int sock = dispatcher.get_fd();
 
@@ -69,7 +69,7 @@ light::utils::ErrorCode SelectPoller::add_dispatcher(Dispatcher &dispatcher) {
 }
 
 light::utils::ErrorCode
-SelectPoller::remove_dispatcher(Dispatcher &dispatcher) {
+PollPoller::remove_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
 
   int sock = dispatcher.get_fd();
@@ -89,7 +89,7 @@ SelectPoller::remove_dispatcher(Dispatcher &dispatcher) {
 }
 
 light::utils::ErrorCode
-SelectPoller::update_dispatcher(Dispatcher &dispatcher) {
+PollPoller::update_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
   int sock = dispatcher.get_fd();
 

@@ -1,11 +1,6 @@
 #pragma once
 #include "flatbuffers/flatbuffers.h"
-extern "C" {
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-}
-
+#include "utils/lua_utils.h"
 #include "core/message.h"
 #include "core/handler.h"
 #include "utils/noncopyable.h"
@@ -52,7 +47,7 @@ public:
         args_(args) {}
   virtual ~LuaHandler() {}
 
-  light::utils::ErrorCode init() {
+  light::utils::ErrorCode init() override {
     if (!lua_ctx_) {
       return LS_GENERIC_ERR_OBJ(not_enough_memory);
     }
@@ -65,7 +60,7 @@ public:
     return LS_OK_ERROR();
   }
 
-  void on_install() {
+  void on_install() override {
     lua_pushlightuserdata(lua_ctx_->L(), this);
     lua_setglobal(lua_ctx_->L(), "light_context");
 
@@ -106,20 +101,24 @@ public:
 
   void register_core_functions();
 
-  void post_message(light::core::light_message_ptr_t msg) {
+  void post_message(light::core::light_message_ptr_t msg) override {
     if (handler_func_)
       handler_func_(msg);
   }
-  void on_unstall() {}
-  void fini() {}
+  void on_unstall() override {}
+  void fini() override {}
 
   inline lua_State *L() { return lua_ctx_->L(); }
 
-  template <typename T> T *create_fbs_message() { return new T(fbb); }
-
-  void delete_fbs_message(void *ptr) {
-    UNUSED(ptr);
-    // delete ptr;
+  template<typename T>
+  int g_new_message(lua_State *l, const std::string &ns)
+  {
+    CHECK_LUA_ARG_COUNT(l, 0);
+    T *obj = nullptr;
+    obj = reinterpret_cast<T*>(lua_newuserdata(l, sizeof(T)));
+    obj = new (obj)T(fbb);
+    light::lua::set_lua_class_metatable<T>(l, LUA_REGISTRYINDEX, ns.c_str());
+    return 1;
   }
 
 private:

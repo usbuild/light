@@ -12,14 +12,6 @@ using namespace light::service;
 TEST(Handler, test) {
   Context ctx;
 
-  // Shuttle
-  // shuttle(*dynamic_cast<NetworkService*>(DefaultContextLoader::instance().require_service("network",
-  // "shuttle-network", ctx)));
-	/*
-  auto network_service =
-      DefaultContextLoader::instance().require_service<NetworkService>(
-          "network", "station-network", ctx);
-					*/
   std::shared_ptr<NetworkService> network_service = std::make_shared<NetworkService>(ctx);
   int station_id = 5;
   auto station_handler =
@@ -45,6 +37,7 @@ TEST(Handler, test) {
 
   // lua_service->post
   lua_service->install_new_handler(ctx, LUA_TEST_DIR "test.lua", "aluahandler", "");
+  lua_service->install_new_handler(ctx, LUA_TEST_DIR "test.lua", "anotherluahandler", "");
 
   ctx.get_looper().add_timer(ec, 5000000LL, 0,
                              [&ctx] { ctx.get_looper().stop(); });
