@@ -9,7 +9,7 @@ using namespace light::network;
 
 class Shuttle : public MessageHandler {
 public:
-  Shuttle(Context &ctx, std::shared_ptr<NetworkService> ns) : MessageHandler(), ns_(ns) {
+  Shuttle(std::shared_ptr<NetworkService> ns) : MessageHandler(), ns_(ns) {
 	}
 
   virtual light::utils::ErrorCode init() {
@@ -132,7 +132,7 @@ private:
 TEST(Service, demo) {
   Context ctx;
 
-  Shuttle shuttle(ctx, DefaultContextLoader::instance().require_service<NetworkService>(ctx, "network", "shuttle-network", ctx, 0));
+  Shuttle shuttle(DefaultContextLoader::instance().require_service<NetworkService>(ctx, "network", "shuttle-network", ctx, 1));
   ctx.install_handler(shuttle);
   shuttle.init();
 
