@@ -55,7 +55,7 @@ private:
     light::core::MessageQueue &mq, int thread_count);
 
 public:
-  NetworkService(light::core::Context &ctx, int thread_count=0);
+  NetworkService(light::core::Context &ctx, int thread_count);
 
 	~NetworkService();
 

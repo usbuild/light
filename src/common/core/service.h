@@ -32,13 +32,13 @@ public:
 
   template <typename CLASS, typename FUNC, typename... ARGS>
   void post(FUNC func, ARGS &&... args) {
-    get_looper().post(std::bind(func, static_cast<CLASS *>(this),
+    get_looper().strand_post(service_id_, std::bind(func, static_cast<CLASS *>(this),
                                 std::forward<ARGS>(args)...));
   }
 
   template <typename CLASS, typename FUNC, typename RET, typename... ARGS>
   light::network::SafeCallWrapper<RET> wrap(FUNC func, ARGS &&... args) {
-    return get_looper().wrap(std::bind(func, static_cast<CLASS *>(this),
+    return get_looper().strand_wrap(service_id_, std::bind(func, static_cast<CLASS *>(this),
                                        std::forward<ARGS>(args)...));
   }
 
@@ -46,9 +46,14 @@ public:
 
   light::network::Looper &get_looper() { return *looper_; }
 
+  void set_id(int service_id) {
+    service_id_ = service_id;
+  }
+
 protected:
   light::network::Looper *looper_;
   light::core::MessageQueue *mq_;
+  int service_id_ = 0;
 };
 
 } /* core */

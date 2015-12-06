@@ -30,6 +30,37 @@ void Context::uninstall_handler(mq_handler_id_t id) {
 }
 
 void Context::push_message(light_message_ptr_t msg) { mq_->push_message(msg); }
-} /* co */
 
+
+light::utils::ErrorCode Context::add_handler(const std::string &name,
+  std::shared_ptr<MessageHandler> handler) {
+  if (has_handler(name)) {
+    return LS_MISC_ERR_OBJ(already_open);
+  }
+  handlers_[name] = handler;
+  return LS_OK_ERROR();
+}
+
+light::utils::ErrorCode Context::add_service(const std::string &name,
+  std::shared_ptr<Service> service) {
+  if (has_service(name)) {
+    return LS_MISC_ERR_OBJ(already_open);
+  }
+  service->set_id(++last_service_id_);
+  services_[name] = service;
+  return LS_OK_ERROR();
+}
+
+std::shared_ptr<MessageHandler> Context::get_handler(const std::string &name) {
+  if (!has_handler(name))
+    return nullptr;
+  return handlers_[name];
+}
+
+std::shared_ptr<Service> Context::get_service(const std::string &name) {
+  if (!has_service(name))
+    return nullptr;
+  return services_[name];
+}
+} /* co */
 } /* li */

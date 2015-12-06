@@ -6,7 +6,7 @@
 using namespace light::core;
 using namespace light::service;
 using namespace light::network;
-
+#if 0
 class Shuttle : public MessageHandler {
 public:
   Shuttle(std::shared_ptr<NetworkService> ns) : MessageHandler(), ns_(ns) {
@@ -132,7 +132,7 @@ private:
 TEST(Service, demo) {
   Context ctx;
 
-  Shuttle shuttle(DefaultContextLoader::instance().require_service<NetworkService>(ctx, "network", "shuttle-network", ctx, 1));
+  Shuttle shuttle(DefaultContextLoader::instance().require_service<NetworkService>(ctx, "network", "shuttle-network", ctx, 2));
   ctx.install_handler(shuttle);
   shuttle.init();
 
@@ -153,3 +153,4 @@ TEST(Service, demo) {
   delete[] ths;
 	*/
 }
+#endif
