@@ -45,6 +45,7 @@ Looper::Looper()
   });
 
   this->add_timer(ec, 1000, 1000, [this] {
+    std::unique_lock<std::mutex> plk(post_functor_lock_);
     for (auto &kv : loop_callbacks_) {
       kv.second();
     }
@@ -211,6 +212,7 @@ void Looper::loop() {
 
 void Looper::functors_work() {
   running_workers_.fetch_add(1);
+  
   while (true) {
     std::function<void()> func;
     do {

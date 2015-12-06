@@ -6,7 +6,7 @@
 using namespace light::core;
 using namespace light::service;
 using namespace light::network;
-#if 0
+
 class Shuttle : public MessageHandler {
 public:
   Shuttle(std::shared_ptr<NetworkService> ns) : MessageHandler(), ns_(ns) {
@@ -137,7 +137,7 @@ TEST(Service, demo) {
   shuttle.init();
 
   light::utils::ErrorCode ec;
-  ctx.get_looper().add_timer(ec, 3000000LL, 0,
+  ctx.get_looper().add_timer(ec, 5000000LL, 0,
                              [&ctx] { ctx.get_looper().stop(); });
 	ctx.get_looper().loop();
 
@@ -153,4 +153,3 @@ TEST(Service, demo) {
   delete[] ths;
 	*/
 }
-#endif
