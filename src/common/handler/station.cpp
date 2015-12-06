@@ -23,7 +23,7 @@ light::utils::ErrorCode Station::init() { return LS_OK_ERROR(); }
 
 void Station::on_install() {
   using ns_t = light::service::NetworkService;
-  network_service_->post<ns_t>(
+  network_service_->strand_post<ns_t>(get_id(),
       &ns_t::create_tcp_server, endpoint_, 5,
       ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
                                      uint32_t handle) {
@@ -41,7 +41,7 @@ void Station::on_install() {
 
 void Station::connect_to_station(const light::network::INetEndPoint &point) {
   using ns_t = light::service::NetworkService;
-  network_service_->post<ns_t>(
+  network_service_->strand_post<ns_t>(get_id(),
       &ns_t::connect_tcp_server, point, 5000000LL,
       ctx_->get_looper().wrap([this, point](light::utils::ErrorCode ec,
                                             uint32_t handle) {
