@@ -12,7 +12,7 @@ using namespace light::service;
 TEST(Handler, test) {
   Context ctx;
 
-  std::shared_ptr<NetworkService> network_service = std::make_shared<NetworkService>(ctx);
+  std::shared_ptr<NetworkService> network_service = DefaultContextLoader::instance().require_service<NetworkService>(ctx, "network", "nt1", ctx, 1);
   int station_id = 5;
   auto station_handler =
       DefaultContextLoader::instance().require_handler<Station>(ctx, 

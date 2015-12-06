@@ -9,8 +9,7 @@ using namespace light::network;
 
 class Shuttle : public MessageHandler {
 public:
-  Shuttle(Context &ctx) : MessageHandler(), ns_(new NetworkService(ctx)) {
-		ns_->init();
+  Shuttle(Context &ctx, std::shared_ptr<NetworkService> ns) : MessageHandler(), ns_(ns) {
 	}
 
   virtual light::utils::ErrorCode init() {
@@ -121,20 +120,21 @@ public:
     }
   }
   virtual void on_unstall() { DLOG(INFO) << "shuttle uninstalled!"; }
-  virtual void fini() { DLOG(INFO) << "shuttle finalize!"; }
+  virtual void fini() {
+    ns_->fini();
+    DLOG(INFO) << "shuttle finalize!";
+  }
 
 private:
-  std::unique_ptr<NetworkService> ns_;
+  std::shared_ptr<NetworkService> ns_;
 };
 
 TEST(Service, demo) {
   Context ctx;
 
-//  std::shared_ptr<NetworkService> ptr =
-//      DefaultContextLoader::instance().require_service<NetworkService>(
-//          "network", "shuttle-network", ctx);
-  Shuttle shuttle(ctx);
+  Shuttle shuttle(ctx, DefaultContextLoader::instance().require_service<NetworkService>(ctx, "network", "shuttle-network", ctx, 0));
   ctx.install_handler(shuttle);
+  shuttle.init();
 
   light::utils::ErrorCode ec;
   ctx.get_looper().add_timer(ec, 3000000LL, 0,

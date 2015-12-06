@@ -33,15 +33,19 @@ get_tcp_peer_endpoint(light::network::TcpConnection *conn) {
   return point;
 }
 
-NetworkService::NetworkService(light::core::Context &ctx)
-    : NetworkService(ctx.get_looper(), ctx.get_mq()) {}
+NetworkService::NetworkService(light::core::Context &ctx, int thread_count)
+    : NetworkService(thread_count ? new light::network::Looper : &ctx.get_looper(), ctx.get_mq(), thread_count) {}
 
-NetworkService::NetworkService(light::network::Looper &looper,
-                               light::core::MessageQueue &mq)
-    : Service(looper, mq), last_socket_id_(0), last_callback_idx_(0),
-      loop_idx_(0) {}
+NetworkService::NetworkService(light::network::Looper *looper,
+  light::core::MessageQueue &mq, int thread_count) : Service(*looper, mq), last_socket_id_(0), last_callback_idx_(0),
+  loop_idx_(0), thread_count_(thread_count) {
+  if (thread_count) {
+    internal_looper_.reset(looper);
+  }
+}
 
 NetworkService::~NetworkService() {
+
 	DLOG(INFO) << __FUNCTION__ << " " << this;
 }
 
@@ -52,6 +56,11 @@ light::utils::ErrorCode NetworkService::init() {
   }
   loop_idx_ = get_looper().register_loop_callback(
       std::bind(&NetworkService::on_loop, this));
+  for (int i = 0; i < thread_count_; ++i) {
+    threads_.emplace_back([this]() {
+      get_looper().loop();
+    });
+  }
   return LS_OK_ERROR();
 }
 
@@ -219,6 +228,12 @@ light::utils::ErrorCode NetworkService::fini() {
   if (loop_idx_) {
     get_looper().unregister_loop_callback(loop_idx_);
     loop_idx_ = 0;
+  }
+  if (thread_count_) {
+    get_looper().stop();
+    for(auto &thd : threads_) {
+      thd.join();
+    }
   }
   return LS_OK_ERROR();
 }

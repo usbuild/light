@@ -3,7 +3,6 @@ print("hello")
 
 function on_install(fd)
 	print("fd2: "..fd)
-	print_r(light)
 	msg = light.ConnectRequestBuilder.new()
 	light.post(0, 1, msg)
 end

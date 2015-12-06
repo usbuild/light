@@ -50,9 +50,13 @@ public:
   typedef std::function<void(light::utils::ErrorCode, uint32_t)>
       network_service_callback_t;
 
+private:
+  NetworkService(light::network::Looper *looper,
+    light::core::MessageQueue &mq, int thread_count);
+
 public:
-  NetworkService(light::core::Context &ctx);
-  NetworkService(light::network::Looper &looper, light::core::MessageQueue &mq);
+  NetworkService(light::core::Context &ctx, int thread_count=0);
+
 	~NetworkService();
 
   light::utils::ErrorCode init();
@@ -146,6 +150,7 @@ private:
 	  std::shared_ptr<T> ptr;
 	  uint32_t opaque;
   };
+  std::unique_ptr<light::network::Looper> internal_looper_;
 
   std::unordered_map<uint32_t, ConnectionContainer<light::network::Acceptor> > acceptor_map_;
   std::unordered_map<uint32_t, ConnectionContainer<ENetHost> > enet_host_map_;
@@ -161,6 +166,10 @@ private:
   int loop_idx_;
   static light::utils::FixedAllocator<2 * 1024> fixed_alloc_;
   std::set<uint32_t> active_close_handlers_;
+
+  int thread_count_;
+  std::vector<std::thread> threads_;
+  
 };
 
 } /* core */

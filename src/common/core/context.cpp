@@ -1,8 +1,16 @@
 #include "core/context.h"
+#include "core/service.h"
+
 namespace light {
 namespace core {
 Context::~Context () {
 	DLOG(INFO) << __FUNCTION__ << " " << this;
+  for (auto &kv : handlers_) {
+    kv.second->fini();
+  }
+  for (auto &kv : services_) {
+    kv.second->fini();
+  }
 }
 
 void Context::install_handler(MessageHandler &mh) {
