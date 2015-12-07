@@ -32,14 +32,8 @@ public:
 
   template <typename CLASS, typename FUNC, typename... ARGS>
   void post(FUNC func, ARGS &&... args) {
-    get_looper().post(std::bind(func, static_cast<CLASS *>(this),
+    get_looper().strand_post(service_id_, std::bind(func, static_cast<CLASS *>(this),
                                 std::forward<ARGS>(args)...));
-  }
-
-  template <typename CLASS, typename FUNC, typename... ARGS>
-  void strand_post(int strand_id, FUNC func, ARGS &&... args) {
-    get_looper().strand_post(strand_id, std::bind(func, static_cast<CLASS *>(this),
-      std::forward<ARGS>(args)...));
   }
 
   template <typename CLASS, typename FUNC, typename RET, typename... ARGS>

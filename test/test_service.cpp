@@ -21,19 +21,19 @@ public:
   virtual void on_install() {
     DLOG(INFO) << "shuttle installed!";
 #if 1
-    ns_->strand_post<NetworkService>(get_id(), 
+    ns_->post<NetworkService>(
         &NetworkService::create_udp_server, INetEndPoint(protocol::v4(), 8889),
         5, 16, ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
                                               uint32_t handle) {
           UNUSED(handle);
           DLOG(INFO) << "create udp server " << ec.message();
-          ns_->strand_post<NetworkService>(get_id(),
+          ns_->post<NetworkService>(
               &NetworkService::create_udp_stub, 10, 16,
               ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
                                              uint32_t stub_id) {
                 DLOG(INFO) << "create udp client stub " << ec.message() << " "
                            << stub_id;
-                ns_->strand_post<NetworkService>(get_id(),
+                ns_->post<NetworkService>(
                     &NetworkService::connect_udp_server,
                     INetEndPoint("127.0.0.1", 8889), 5000000LL, stub_id, 8,
                     ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
@@ -47,12 +47,12 @@ public:
                       pkt.size = 100;
                       pkt.destroy = [data] { delete[] data; };
                       DLOG(INFO) << "send udp packet " << handle;
-                      ns_->strand_post<NetworkService>(get_id(),
+                      ns_->post<NetworkService>(
                           &NetworkService::send_common_packet, pkt, true, 0);
                       light::utils::ErrorCode ec2;
                       ns_->get_looper().add_timer(
                           ec2, 1000000LL, 0, [this, handle] {
-                            ns_->strand_post<NetworkService>(get_id(), &NetworkService::close,
+                            ns_->post<NetworkService>(&NetworkService::close,
                                                       handle);
                           });
                     }),
@@ -64,13 +64,13 @@ public:
 #endif
 
 #if 1
-    ns_->strand_post<NetworkService>(get_id(),
+    ns_->post<NetworkService>(
         &NetworkService::create_tcp_server, INetEndPoint(protocol::v4(), 8890),
         5, ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
                                           uint32_t handle) {
           UNUSED(handle);
           DLOG(INFO) << "create tcp server " << ec.message();
-          ns_->strand_post<NetworkService>(get_id(),
+          ns_->post<NetworkService>(
               &NetworkService::connect_tcp_server,
               INetEndPoint("127.0.0.1", 8890), 5000000LL,
               ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
@@ -87,7 +87,7 @@ public:
                   DLOG(INFO) << "packet sent";
                 };
                 DLOG(INFO) << "send packet " << handle;
-                ns_->strand_post<NetworkService>(get_id(), &NetworkService::send_common_packet,
+                ns_->post<NetworkService>(&NetworkService::send_common_packet,
                                           pkt, true, 0);
               }),
               id_);
