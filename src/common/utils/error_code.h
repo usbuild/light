@@ -3,7 +3,7 @@
 #elif defined(ERROR_CODE_MESSAGE_SWITCH)
 #define ADD_ERROR_CODE_DEF(code, desc)                                                             \
   case light::utils::error_code_t::code:                                                              \
-    return desc;
+    return std::string(desc);
 #else
 #define ADD_ERROR_CODE_DEF(code, desc)
 #endif
