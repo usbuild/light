@@ -18,9 +18,9 @@ INetEndPointIpV4::INetEndPointIpV4(const std::string &ip, int port) {
 
 INetEndPointIpV4::operator INetEndPoint() const { return INetEndPoint(*this); }
 
-light::utils::ErrorCode
+std::error_code
 INetEndPointIpV4::parse_from_ip_port(const std::string &ip, int port) {
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   clear_sockaddr();
   addr4_.sin_family = AF_INET;
 
@@ -28,7 +28,7 @@ INetEndPointIpV4::parse_from_ip_port(const std::string &ip, int port) {
     addr4_.sin_addr.s_addr = htonl(INADDR_ANY);
   } else {
     if (::inet_pton(AF_INET, ip.c_str(), &(addr4_.sin_addr)) <= 0) {
-      ec = LS_GENERIC_ERROR(errno);
+      ec = LS_GENERIC_ERROR(ERRNO());
     }
   }
   addr4_.sin_port = htons(port);
@@ -42,7 +42,7 @@ void INetEndPointIpV4::from_raw_struct(struct sockaddr_in *addr) {
 INetEndPointIpV6::operator INetEndPoint() const { return INetEndPoint(*this); }
 
 sa_family_t INetEndPoint::get_ip_version(const std::string &ip,
-                                         light::utils::ErrorCode &ec) {
+                                         std::error_code &ec) {
   struct addrinfo hint, *res = NULL;
 
   memset(&hint, '\0', sizeof hint);
@@ -51,7 +51,7 @@ sa_family_t INetEndPoint::get_ip_version(const std::string &ip,
   hint.ai_flags = AI_NUMERICHOST;
 
   if (getaddrinfo(ip.c_str(), NULL, &hint, &res) != 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
     return AF_UNSPEC;
   }
 
@@ -74,9 +74,9 @@ std::string INetEndPointIpV6::to_string() const {
   return std::string(buf);
 }
 
-light::utils::ErrorCode
+std::error_code
 INetEndPointIpV6::parse_from_ip_port(const std::string &ip, int port) {
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   clear_sockaddr();
   addr6_.sin6_family = AF_INET6;
 
@@ -84,7 +84,7 @@ INetEndPointIpV6::parse_from_ip_port(const std::string &ip, int port) {
     addr6_.sin6_addr = in6addr_any;
   } else {
     if (::inet_pton(AF_INET6, ip.c_str(), &addr6_.sin6_addr) <= 0) {
-      ec = LS_GENERIC_ERROR(errno);
+      ec = LS_GENERIC_ERROR(ERRNO());
     }
   }
   addr6_.sin6_port = htons(port);
@@ -112,7 +112,7 @@ INetEndPoint::INetEndPoint(const protocol::V6 &v6, int port) {
 }
 
 INetEndPoint::INetEndPoint(const std::string &ip, int port) {
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   *this = INetEndPoint::parse_from_ip_port(ec, ip, port);
   if (ec)
     throw light::exception::SocketException(ec);
@@ -177,7 +177,7 @@ protocol::All &INetEndPoint::get_protocol() const {
   }
 }
 
-INetEndPoint INetEndPoint::parse_from_ip_port(light::utils::ErrorCode &ec,
+INetEndPoint INetEndPoint::parse_from_ip_port(std::error_code &ec,
                                               const std::string &ip, int port) {
   INetEndPoint ret;
   auto ver = INetEndPoint::get_ip_version(ip, ec);

@@ -27,8 +27,8 @@ public:
 
   virtual ~Service() {}
 
-  virtual light::utils::ErrorCode init() = 0;
-  virtual light::utils::ErrorCode fini() = 0;
+  virtual std::error_code init() = 0;
+  virtual std::error_code fini() = 0;
 
   template <typename CLASS, typename FUNC, typename... ARGS>
   void post(FUNC func, ARGS &&... args) {

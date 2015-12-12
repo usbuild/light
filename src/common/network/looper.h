@@ -67,22 +67,22 @@ public:
 
   void loop();
 
-  light::utils::ErrorCode add_dispatcher(Dispatcher &dispatcher);
+  std::error_code add_dispatcher(Dispatcher &dispatcher);
 
-  light::utils::ErrorCode remove_dispatcher(Dispatcher &dispatcher);
+  std::error_code remove_dispatcher(Dispatcher &dispatcher);
 
-  light::utils::ErrorCode update_dispatcher(Dispatcher &dispatcher);
+  std::error_code update_dispatcher(Dispatcher &dispatcher);
 
   Dispatcher &get_time_dispatcher();
 
   Dispatcher &get_event_dispatcher();
 
-  TimerId add_timer(light::utils::ErrorCode &ec, Timestamp timeout,
+  TimerId add_timer(std::error_code &ec, Timestamp timeout,
                     Timestamp interval, const functor &time_callback);
 
-  void cancel_timer(light::utils::ErrorCode &ec, const TimerId timer_id);
+  void cancel_timer(std::error_code &ec, const TimerId timer_id);
 
-  light::utils::ErrorCode update_timerfd_expire();
+  std::error_code update_timerfd_expire();
 
   void stop();
 

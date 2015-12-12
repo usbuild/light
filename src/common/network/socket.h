@@ -25,39 +25,39 @@ namespace network {
 
 class SocketOps {
 public:
-  virtual light::utils::ErrorCode open(int &fd, const protocol::V4 &v4) const
+  virtual std::error_code open(int &fd, const protocol::V4 &v4) const
       noexcept = 0;
-  virtual light::utils::ErrorCode open(int &fd, const protocol::V6 &v6) const
+  virtual std::error_code open(int &fd, const protocol::V6 &v6) const
       noexcept = 0;
 
-  light::utils::ErrorCode open_and_bind(int &fd,
+  std::error_code open_and_bind(int &fd,
                                         const INetEndPoint &endpoint) const;
 
-  light::utils::ErrorCode bind(int fd, const INetEndPoint &endpoint) const;
+  std::error_code bind(int fd, const INetEndPoint &endpoint) const;
 
-  light::utils::ErrorCode connect(int fd, const INetEndPoint &endpoint) const;
+  std::error_code connect(int fd, const INetEndPoint &endpoint) const;
 
-  light::utils::ErrorCode listen(int fd, int backlog /*=5*/) const;
+  std::error_code listen(int fd, int backlog /*=5*/) const;
 
-  virtual light::utils::ErrorCode close(int &fd) const;
+  virtual std::error_code close(int &fd) const;
 };
 
 class TcpSocketOps : public SocketOps { /*{{{*/
 public:
-  light::utils::ErrorCode open(int &sockfd, const protocol::V4 &v4) const
+  std::error_code open(int &sockfd, const protocol::V4 &v4) const
       noexcept;
 
-  light::utils::ErrorCode open(int &sockfd, const protocol::V6 &v6) const
+  std::error_code open(int &sockfd, const protocol::V6 &v6) const
       noexcept;
 
 }; /*}}}*/
 
 class UdpSocketOps : public SocketOps {
 public:
-  light::utils::ErrorCode open(int &sockfd, const protocol::V4 &v4) const
+  std::error_code open(int &sockfd, const protocol::V4 &v4) const
       noexcept;
 
-  light::utils::ErrorCode open(int &sockfd, const protocol::V6 &v6) const
+  std::error_code open(int &sockfd, const protocol::V6 &v6) const
       noexcept;
 };
 
@@ -73,48 +73,48 @@ public:
 
   explicit Socket(const SocketOps &ops, const INetEndPoint &endpoint);
 
-  virtual light::utils::ErrorCode set_nonblocking();
+  virtual std::error_code set_nonblocking();
 
-  virtual light::utils::ErrorCode set_reuseaddr(int enable);
+  virtual std::error_code set_reuseaddr(int enable);
 
-  virtual light::utils::ErrorCode get_last_error() {
+  virtual std::error_code get_last_error() {
     return light::utils::check_socket_error(sockfd_);
   }
 
-  virtual light::utils::ErrorCode bind(const INetEndPoint &endpoint) {
+  virtual std::error_code bind(const INetEndPoint &endpoint) {
     return ops_->bind(sockfd_, endpoint);
   }
-  virtual light::utils::ErrorCode listen(int backlog = 5) {
+  virtual std::error_code listen(int backlog = 5) {
     return ops_->listen(sockfd_, backlog);
   }
-  virtual light::utils::ErrorCode connect(const INetEndPoint &endpoint) {
+  virtual std::error_code connect(const INetEndPoint &endpoint) {
     return ops_->connect(sockfd_, endpoint);
   }
 
-  light::utils::ErrorCode open(const protocol::V4 &v4) noexcept {
+  std::error_code open(const protocol::V4 &v4) noexcept {
     return ops_->open(this->sockfd_, v4);
   }
-  light::utils::ErrorCode open(const protocol::V6 &v6) noexcept {
+  std::error_code open(const protocol::V6 &v6) noexcept {
     return ops_->open(this->sockfd_, v6);
   }
 
-  light::utils::ErrorCode open(const protocol::All &all) noexcept;
+  std::error_code open(const protocol::All &all) noexcept;
 
-  light::utils::ErrorCode open(const INetEndPoint &endpoint) noexcept {
+  std::error_code open(const INetEndPoint &endpoint) noexcept {
     return ops_->open_and_bind(this->sockfd_, endpoint);
   }
 
-  virtual light::utils::ErrorCode close() { return ops_->close(this->sockfd_); }
+  virtual std::error_code close() { return ops_->close(this->sockfd_); }
 
-  virtual ssize_t write(light::utils::ErrorCode &ec, const void *buf,
+  virtual ssize_t write(std::error_code &ec, const void *buf,
                         size_t len, int flags = 0);
 
-  virtual ssize_t read(light::utils::ErrorCode &ec, void *buf, size_t len,
+  virtual ssize_t read(std::error_code &ec, void *buf, size_t len,
                        int flags = 0);
 
   inline int get_sockfd() const { return sockfd_; }
 
-  light::utils::ErrorCode get_local_endpoint(INetEndPoint &endpoint);
+  std::error_code get_local_endpoint(INetEndPoint &endpoint);
 
 protected:
   int sockfd_;
@@ -129,10 +129,10 @@ public:
   explicit TcpSocket(const INetEndPoint &endpoint)
       : Socket(Socket::tcp_ops(), endpoint) {}
 
-  light::utils::ErrorCode accept(TcpSocket &client_socket);
-  light::utils::ErrorCode accept(int &fd);
+  std::error_code accept(TcpSocket &client_socket);
+  std::error_code accept(int &fd);
 
-  light::utils::ErrorCode set_keepalive();
+  std::error_code set_keepalive();
 };
 
 class UdpSocket : public Socket {

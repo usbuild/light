@@ -26,10 +26,10 @@ void TcpConnection::buffer_write_callback() {
   auto &vec = write_buffer_.get_iovec();
   ssize_t written = ::writev(get_sockfd(), &vec[0], vec.size());
   if (written < 0) {
-    if (errno == EAGAIN || errno == EWOULDBLOCK) {
+    if (ERRNO() == EAGAIN || ERRNO() == EWOULDBLOCK) {
 
     } else {
-      LOG(WARNING) << "write failed: " << LS_GENERIC_ERROR(errno).message();
+      LOG(WARNING) << "write failed: " << LS_GENERIC_ERROR(ERRNO()).message();
     }
   } else {
     write_buffer_.shift(written);
@@ -39,7 +39,7 @@ void TcpConnection::buffer_write_callback() {
   }
 }
 
-light::utils::ErrorCode TcpConnection::close() {
+std::error_code TcpConnection::close() {
   dispatcher_->detach();
   return TcpSocket::close();
 }
@@ -53,7 +53,7 @@ void TcpConnection::async_write(void *buf, size_t len,
   }
 }
 
-light::utils::ErrorCode
+std::error_code
 TcpConnection::get_peer_endpoint(light::network::INetEndPoint &endpoint) {
   if (!peer_point_.is_ipv4() && !peer_point_.is_ipv6()) {
     socklen_t len = sizeof(struct sockaddr_storage);
@@ -61,7 +61,7 @@ TcpConnection::get_peer_endpoint(light::network::INetEndPoint &endpoint) {
     struct sockaddr *addr_info = reinterpret_cast<struct sockaddr *>(&addr);
     int ret = ::getpeername(get_sockfd(), addr_info, &len);
     if (ret != 0) {
-      return LS_GENERIC_ERROR(errno);
+      return LS_GENERIC_ERROR(ERRNO());
     } else {
       peer_point_.from_raw_struct(addr_info);
     }

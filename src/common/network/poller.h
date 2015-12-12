@@ -12,15 +12,15 @@ public:
 
   virtual ~Poller();
 
-  virtual light::utils::ErrorCode
+  virtual std::error_code
   poll(int timeout,
        std::unordered_map<int, Dispatcher *> &active_dispatchers) = 0;
 
-  virtual light::utils::ErrorCode add_dispatcher(Dispatcher &dispatcher) = 0;
+  virtual std::error_code add_dispatcher(Dispatcher &dispatcher) = 0;
 
-  virtual light::utils::ErrorCode remove_dispatcher(Dispatcher &dispatcher) = 0;
+  virtual std::error_code remove_dispatcher(Dispatcher &dispatcher) = 0;
 
-  virtual light::utils::ErrorCode update_dispatcher(Dispatcher &dispatcher) = 0;
+  virtual std::error_code update_dispatcher(Dispatcher &dispatcher) = 0;
 
   bool has_dispathcer(const Dispatcher &dispatcher) const;
 

@@ -11,7 +11,7 @@ TcpClient::~TcpClient() {
   }
 }
 
-light::utils::ErrorCode TcpClient::open(const protocol::All &v) {
+std::error_code TcpClient::open(const protocol::All &v) {
   auto ec = TcpSocket::open(v);
   if (ec)
     return ec;

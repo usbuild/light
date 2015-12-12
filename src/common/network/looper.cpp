@@ -21,13 +21,13 @@ Looper::Looper()
     }
   });
 
-  light::utils::ErrorCode ec;
+  std::error_code ec;
 
 #ifdef HAVE_TIMERFD
   // many cause leap second problem?
   if ((timerfd = ::timerfd_create(CLOCK_REALTIME,
                                   TFD_NONBLOCK | TFD_CLOEXEC)) == -1) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
+    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
   }
   timer_dispatcher_.reset(new Dispatcher(*this, timerfd));
   ec = timer_dispatcher_->attach();
@@ -54,19 +54,19 @@ Looper::Looper()
 
 #ifdef HAVE_EVENTFD
   if ((eventfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC)) == -1) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
+    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
   }
   event_dispatcher_.reset(new Dispatcher(*this, eventfd));
 #elif defined(HAVE_UNISTD_H)
   int pipes[2];
   if (::pipe(pipes) == -1) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
+    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
   }
   if (light::utils::set_nonblocking(pipes[0]) != 0) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
+    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
   }
   if (light::utils::set_nonblocking(pipes[1]) != 0) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
+    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
   }
   event_dispatcher_.reset(new Dispatcher(*this, pipes[0]));
   w_event_dispatcher_.reset(new Dispatcher(*this, pipes[1]));
@@ -87,15 +87,15 @@ Looper::Looper()
   commit = true;
 }
 
-light::utils::ErrorCode Looper::add_dispatcher(Dispatcher &dispatcher) {
+std::error_code Looper::add_dispatcher(Dispatcher &dispatcher) {
   return poller_->add_dispatcher(dispatcher);
 }
 
-light::utils::ErrorCode Looper::remove_dispatcher(Dispatcher &dispatcher) {
+std::error_code Looper::remove_dispatcher(Dispatcher &dispatcher) {
   return poller_->remove_dispatcher(dispatcher);
 }
 
-light::utils::ErrorCode Looper::update_dispatcher(Dispatcher &dispatcher) {
+std::error_code Looper::update_dispatcher(Dispatcher &dispatcher) {
   return poller_->update_dispatcher(dispatcher);
 }
 
@@ -103,7 +103,7 @@ Dispatcher &Looper::get_time_dispatcher() { return *timer_dispatcher_; }
 
 Dispatcher &Looper::get_event_dispatcher() { return *event_dispatcher_; }
 
-TimerId Looper::add_timer(light::utils::ErrorCode &ec, Timestamp timeout,
+TimerId Looper::add_timer(std::error_code &ec, Timestamp timeout,
                           Timestamp interval, const functor &time_callback) {
   ec = LS_OK_ERROR();
   bool need_update;
@@ -114,7 +114,7 @@ TimerId Looper::add_timer(light::utils::ErrorCode &ec, Timestamp timeout,
   return ret;
 }
 
-void Looper::cancel_timer(light::utils::ErrorCode &ec, const TimerId timer_id) {
+void Looper::cancel_timer(std::error_code &ec, const TimerId timer_id) {
   ec = LS_OK_ERROR();
   bool need_update;
   queue_.del_timer(timer_id, need_update);
@@ -123,7 +123,7 @@ void Looper::cancel_timer(light::utils::ErrorCode &ec, const TimerId timer_id) {
   }
 }
 
-light::utils::ErrorCode Looper::update_timerfd_expire() {
+std::error_code Looper::update_timerfd_expire() {
 #ifdef HAVE_TIMERFD
   auto timer = queue_.get_nearist_timer();
   struct itimerspec spec;
@@ -139,7 +139,7 @@ light::utils::ErrorCode Looper::update_timerfd_expire() {
   }
   if ((::timerfd_settime(timer_dispatcher_->get_fd(), TFD_TIMER_ABSTIME, &spec,
                          nullptr)) == -1) {
-    return LS_GENERIC_ERROR(errno);
+    return LS_GENERIC_ERROR(ERRNO());
   }
 #endif
   return LS_OK_ERROR();

@@ -14,7 +14,7 @@ public:
   MessageHandler() : id_(0), ctx_(nullptr) {}
   virtual ~MessageHandler() {}
 
-  virtual light::utils::ErrorCode init() = 0;
+  virtual std::error_code init() = 0;
   virtual void on_install() = 0;
   virtual void post_message(light::core::light_message_ptr_t msg) = 0;
   virtual void on_unstall() = 0;

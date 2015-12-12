@@ -7,17 +7,17 @@ namespace exception {
 
 class Exception : public std::exception {
 public:
-  explicit Exception(light::utils::ErrorCode &ec) : ec_(ec) {}
-  explicit Exception(light::utils::ErrorCode &&ec) : ec_(ec) {}
+  explicit Exception(std::error_code &ec) : ec_(ec) {}
+  explicit Exception(std::error_code &&ec) : ec_(ec) {}
   const char *what() const noexcept { return ec_.message().c_str(); }
 
 private:
-  light::utils::ErrorCode ec_;
+  std::error_code ec_;
 };
 
 #define ADD_SIMPLE_EC_CONSTRUCTOR(Clazz)                                       \
-  explicit Clazz(light::utils::ErrorCode &ec) : Exception(ec) {}               \
-  explicit Clazz(light::utils::ErrorCode &&ec) : Exception(ec) {}
+  explicit Clazz(std::error_code &ec) : Exception(ec) {}               \
+  explicit Clazz(std::error_code &&ec) : Exception(ec) {}
 
 class SocketException : public Exception {
 public:

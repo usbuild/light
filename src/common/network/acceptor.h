@@ -12,7 +12,7 @@ public:
   Acceptor(Looper &looper);
   ~Acceptor();
 
-  light::utils::ErrorCode open(const protocol::All &v);
+  std::error_code open(const protocol::All &v);
 
   /**
    * @brief 用于接收一个客户端请求

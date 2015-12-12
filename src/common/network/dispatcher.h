@@ -118,10 +118,10 @@ public:
   void set_index(int index) { index_ = index; }
 
 public:
-  light::utils::ErrorCode attach(Looper &looper);
-  light::utils::ErrorCode detach();
-  light::utils::ErrorCode attach();
-  light::utils::ErrorCode reattach();
+  std::error_code attach(Looper &looper);
+  std::error_code detach();
+  std::error_code attach();
+  std::error_code reattach();
 
 protected:
   class DispatcherEventCallback {

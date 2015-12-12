@@ -31,7 +31,7 @@ enum NetworkServiceMessageType {
 struct NetworkServiceMessage {
   NetworkServiceMessageType type;
   uint32_t handle;
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   CommonPacket packet;
   light::network::INetEndPoint endpoint;
 };
@@ -47,7 +47,7 @@ class NetworkService : public light::core::Service {
   };
 
 public:
-  typedef std::function<void(light::utils::ErrorCode, uint32_t)>
+  typedef std::function<void(std::error_code, uint32_t)>
       network_service_callback_t;
 
 private:
@@ -59,9 +59,9 @@ public:
 
 	~NetworkService();
 
-  light::utils::ErrorCode init();
+  std::error_code init();
 
-  light::utils::ErrorCode fini();
+  std::error_code fini();
 
   void create_tcp_server(const light::network::INetEndPoint &endpoint,
                          int backlog, network_service_callback_t func,
@@ -105,7 +105,7 @@ private:
                             const light::network::INetEndPoint &peer);
 
   void forward_error_message(NetworkServiceMessageType type, uint32_t opaque,
-                             uint32_t handle, const light::utils::ErrorCode &ec,
+                             uint32_t handle, const std::error_code &ec,
                              const light::network::INetEndPoint &peer);
 
   void forward_event_message(NetworkServiceMessageType type, uint32_t opaque,
@@ -124,7 +124,7 @@ private:
   void on_get_message_from_remote(uint32_t handle, const CommonPacket &pkt,
                                   const light::network::INetEndPoint &point, uint32_t opque);
 
-  void handle_tcp_error(uint32_t handle, const light::utils::ErrorCode &ec);
+  void handle_tcp_error(uint32_t handle, const std::error_code &ec);
 
   void handle_tcp_close(uint32_t handle);
 

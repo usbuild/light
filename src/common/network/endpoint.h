@@ -79,7 +79,7 @@ public:
     return reinterpret_cast<const sockaddr *>(&addr4_);
   }
 
-  light::utils::ErrorCode parse_from_ip_port(const std::string &ip, int port);
+  std::error_code parse_from_ip_port(const std::string &ip, int port);
 
   std::string to_string() const {
     return std::string(::inet_ntoa(addr4_.sin_addr));
@@ -111,7 +111,7 @@ public:
 
   std::string to_string() const;
 
-  light::utils::ErrorCode parse_from_ip_port(const std::string &ip, int port);
+  std::error_code parse_from_ip_port(const std::string &ip, int port);
 
   socklen_t get_socklen() const { return sizeof(addr6_); }
 
@@ -166,9 +166,9 @@ public:
   unsigned int get_port() const;
 
   static sa_family_t get_ip_version(const std::string &ip,
-                                    light::utils::ErrorCode &ec);
+                                    std::error_code &ec);
 
-  static INetEndPoint parse_from_ip_port(light::utils::ErrorCode &ec,
+  static INetEndPoint parse_from_ip_port(std::error_code &ec,
                                          const std::string &ip, int port);
 
   void from_raw_struct(struct sockaddr *addr);

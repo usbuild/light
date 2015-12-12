@@ -32,7 +32,7 @@ void Context::uninstall_handler(mq_handler_id_t id) {
 void Context::push_message(light_message_ptr_t msg) { mq_->push_message(msg); }
 
 
-light::utils::ErrorCode Context::add_handler(const std::string &name,
+std::error_code Context::add_handler(const std::string &name,
   std::shared_ptr<MessageHandler> handler) {
   if (has_handler(name)) {
     return LS_MISC_ERR_OBJ(already_open);
@@ -41,7 +41,7 @@ light::utils::ErrorCode Context::add_handler(const std::string &name,
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode Context::add_service(const std::string &name,
+std::error_code Context::add_service(const std::string &name,
   std::shared_ptr<Service> service) {
   if (has_service(name)) {
     return LS_MISC_ERR_OBJ(already_open);

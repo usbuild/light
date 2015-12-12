@@ -14,13 +14,13 @@ namespace network {
 KqueuePoller::KqueuePoller(Looper &looper) : Poller(looper), kqueuefd_(0) {
   if ((this->kqueuefd_ = ::kqueue()) == -1) {
     this->kqueuefd_ = 0;
-    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
+    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
   }
 }
 
 KqueuePoller::~KqueuePoller() {}
 
-light::utils::ErrorCode
+std::error_code
 KqueuePoller::poll(int timeout,
                    std::unordered_map<int, Dispatcher *> &active_dispatchers) {
 
@@ -32,7 +32,7 @@ KqueuePoller::poll(int timeout,
   int num_events = ::kevent(kqueuefd_, NULL, 0, ev, MAX_LOOPER_EVENTS, &spec);
 
   if (num_events < 0) {
-    if (errno == EINTR) {
+    if (ERRNO() == EINTR) {
       return LS_OK_ERROR();
     }
   } else if (num_events == 0) {
@@ -51,14 +51,14 @@ KqueuePoller::poll(int timeout,
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode KqueuePoller::add_dispatcher(Dispatcher &dispatcher) {
+std::error_code KqueuePoller::add_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) == dispatchers_.end());
   int sock = dispatcher.get_fd();
   struct kevent ke;
   if (dispatcher.readable()) {
     EV_SET(&ke, sock, EVFILT_READ, EV_ADD, 0, 0, &dispatcher);
     if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1) {
-      return LS_GENERIC_ERROR(errno);
+      return LS_GENERIC_ERROR(ERRNO());
     }
   }
   if (dispatcher.writable()) {
@@ -66,7 +66,7 @@ light::utils::ErrorCode KqueuePoller::add_dispatcher(Dispatcher &dispatcher) {
     if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1) {
       EV_SET(&ke, sock, EVFILT_READ, EV_DELETE, 0, 0, NULL);
       if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1) {
-        return LS_GENERIC_ERROR(errno);
+        return LS_GENERIC_ERROR(ERRNO());
       }
     }
   }
@@ -75,26 +75,26 @@ light::utils::ErrorCode KqueuePoller::add_dispatcher(Dispatcher &dispatcher) {
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode
+std::error_code
 KqueuePoller::remove_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
 
   int sock = dispatcher.get_fd();
   struct kevent ke;
   EV_SET(&ke, sock, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-  if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && errno != ENOENT) {
-    return LS_GENERIC_ERROR(errno);
+  if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && ERRNO() != ENOENT) {
+    return LS_GENERIC_ERROR(ERRNO());
   }
   EV_SET(&ke, sock, EVFILT_WRITE, EV_DELETE, 0, 0, NULL);
-  if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && errno != ENOENT) {
-    return LS_GENERIC_ERROR(errno);
+  if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && ERRNO() != ENOENT) {
+    return LS_GENERIC_ERROR(ERRNO());
   }
 
   dispatchers_.erase(dispatcher.get_fd());
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode
+std::error_code
 KqueuePoller::update_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
   int sock = dispatcher.get_fd();
@@ -102,26 +102,26 @@ KqueuePoller::update_dispatcher(Dispatcher &dispatcher) {
   if (dispatcher.readable()) {
     EV_SET(&ke, sock, EVFILT_READ, EV_ADD, 0, 0, &dispatcher);
     if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1) {
-      return LS_GENERIC_ERROR(errno);
+      return LS_GENERIC_ERROR(ERRNO());
     }
   } else {
     EV_SET(&ke, sock, EVFILT_READ, EV_DELETE, 0, 0, &dispatcher);
-    if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && errno != ENOENT) {
-      return LS_GENERIC_ERROR(errno);
+    if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && ERRNO() != ENOENT) {
+      return LS_GENERIC_ERROR(ERRNO());
     }
   }
   if (dispatcher.writable()) {
     EV_SET(&ke, sock, EVFILT_WRITE, EV_ADD, 0, 0, &dispatcher);
     if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1) {
       EV_SET(&ke, sock, EVFILT_READ, EV_DELETE, 0, 0, NULL);
-      if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && errno != ENOENT) {
-        return LS_GENERIC_ERROR(errno);
+      if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && ERRNO() != ENOENT) {
+        return LS_GENERIC_ERROR(ERRNO());
       }
     }
   } else {
     EV_SET(&ke, sock, EVFILT_WRITE, EV_DELETE, 0, 0, &dispatcher);
-    if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && errno != ENOENT) {
-      return LS_GENERIC_ERROR(errno);
+    if (::kevent(kqueuefd_, &ke, 1, NULL, 0, NULL) == -1 && ERRNO() != ENOENT) {
+      return LS_GENERIC_ERROR(ERRNO());
     }
   }
   return LS_OK_ERROR();

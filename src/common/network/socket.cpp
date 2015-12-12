@@ -2,7 +2,7 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
-#include <errno.h>
+
 #include <fcntl.h>
 #include <memory>
 #include <mutex>
@@ -26,9 +26,9 @@ using namespace light;
 using namespace light::network;
 using namespace std::placeholders;
 // SocketOps
-light::utils::ErrorCode
+std::error_code
 SocketOps::open_and_bind(int &fd, const INetEndPoint &endpoint) const {
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   if (endpoint.is_ipv4()) {
     ec = this->open(fd, protocol::V4());
   } else {
@@ -49,41 +49,41 @@ SocketOps::open_and_bind(int &fd, const INetEndPoint &endpoint) const {
   return ec;
 }
 
-light::utils::ErrorCode SocketOps::bind(int fd,
+std::error_code SocketOps::bind(int fd,
                                         const INetEndPoint &endpoint) const {
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   if (::bind(fd, endpoint.get_sock_addr(), endpoint.get_socklen()) < 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
   }
   return ec;
 }
 
-light::utils::ErrorCode SocketOps::connect(int fd,
+std::error_code SocketOps::connect(int fd,
                                            const INetEndPoint &endpoint) const {
-  light::utils::ErrorCode ec;
+  std::error_code ec;
 
   int ret = ::connect(fd, endpoint.get_sock_addr(), endpoint.get_socklen());
   if (ret != 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
   }
   return ec;
 }
 
-light::utils::ErrorCode SocketOps::listen(int fd, int backlog /*=5*/) const {
-  light::utils::ErrorCode ec;
+std::error_code SocketOps::listen(int fd, int backlog /*=5*/) const {
+  std::error_code ec;
   int ret = ::listen(fd, backlog);
   if (ret == -1) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
   }
   return ec;
 }
 
-light::utils::ErrorCode SocketOps::close(int &fd) const {
-  light::utils::ErrorCode ec;
+std::error_code SocketOps::close(int &fd) const {
+  std::error_code ec;
   if (!fd)
     return ec;
   if (socketclose(fd) != 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
   } else {
     fd = 0;
   }
@@ -91,50 +91,50 @@ light::utils::ErrorCode SocketOps::close(int &fd) const {
 }
 
 // TcpSocketOps
-light::utils::ErrorCode TcpSocketOps::open(int &sockfd,
+std::error_code TcpSocketOps::open(int &sockfd,
                                            const protocol::V4 &v4) const
     noexcept {
   UNUSED(v4);
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   if ((sockfd = ::socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
     sockfd = 0;
   }
   return ec;
 }
 
-light::utils::ErrorCode TcpSocketOps::open(int &sockfd,
+std::error_code TcpSocketOps::open(int &sockfd,
                                            const protocol::V6 &v6) const
     noexcept {
   UNUSED(v6);
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   if ((sockfd = ::socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
     sockfd = 0;
   }
   return ec;
 }
 
 // UdpSocketOps
-light::utils::ErrorCode UdpSocketOps::open(int &sockfd,
+std::error_code UdpSocketOps::open(int &sockfd,
                                            const protocol::V4 &v4) const
     noexcept {
   UNUSED(v4);
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   if ((sockfd = ::socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
     sockfd = 0;
   }
   return ec;
 }
 
-light::utils::ErrorCode UdpSocketOps::open(int &sockfd,
+std::error_code UdpSocketOps::open(int &sockfd,
                                            const protocol::V6 &v6) const
     noexcept {
   UNUSED(v6);
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   if ((sockfd = ::socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
     sockfd = 0;
   }
   return ec;
@@ -159,16 +159,16 @@ Socket::Socket(const SocketOps &ops, const INetEndPoint &endpoint)
     throw light::exception::SocketException(ec);
 }
 
-light::utils::ErrorCode Socket::set_nonblocking() {
-  light::utils::ErrorCode ec;
+std::error_code Socket::set_nonblocking() {
+  std::error_code ec;
   if (light::utils::set_nonblocking(this->sockfd_) != 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
   }
   return ec;
 }
 
-light::utils::ErrorCode Socket::set_reuseaddr(int enable) {
-  light::utils::ErrorCode ec;
+std::error_code Socket::set_reuseaddr(int enable) {
+  std::error_code ec;
 #ifdef WIN32
   const char optval = static_cast<char>(enable);
 #else
@@ -176,25 +176,25 @@ light::utils::ErrorCode Socket::set_reuseaddr(int enable) {
 #endif
   if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval,
                  sizeof(optval)) != 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
   }
   return ec;
 }
-ssize_t Socket::write(light::utils::ErrorCode &ec, const void *buf, size_t len,
+ssize_t Socket::write(std::error_code &ec, const void *buf, size_t len,
                       int flags) {
   ssize_t s = ::send(this->sockfd_, static_cast<const char *>(buf), len, flags);
-  ec = LS_GENERIC_ERROR(errno);
+  ec = LS_GENERIC_ERROR(ERRNO());
   return s;
 }
 
-ssize_t Socket::read(light::utils::ErrorCode &ec, void *buf, size_t len,
+ssize_t Socket::read(std::error_code &ec, void *buf, size_t len,
                      int flags) {
   ssize_t s = ::recv(this->sockfd_, static_cast<char *>(buf), len, flags);
-  ec = LS_GENERIC_ERROR(errno);
+  ec = LS_GENERIC_ERROR(ERRNO());
   return s;
 }
 
-light::utils::ErrorCode Socket::open(const protocol::All &all) noexcept {
+std::error_code Socket::open(const protocol::All &all) noexcept {
   if (dynamic_cast<const protocol::V4 *>(&all)) {
     return ops_->open(this->sockfd_, protocol::v4());
   } else if (dynamic_cast<const protocol::V6 *>(&all)) {
@@ -204,14 +204,14 @@ light::utils::ErrorCode Socket::open(const protocol::All &all) noexcept {
   }
 }
 
-light::utils::ErrorCode Socket::get_local_endpoint(INetEndPoint &endpoint) {
+std::error_code Socket::get_local_endpoint(INetEndPoint &endpoint) {
   if (!local_point_.is_ipv4() && !local_point_.is_ipv6()) {
     socklen_t len = sizeof(struct sockaddr_storage);
     struct sockaddr_storage addr;
     struct sockaddr *addr_info = reinterpret_cast<struct sockaddr *>(&addr);
     int ret = ::getsockname(get_sockfd(), addr_info, &len);
     if (ret != 0) {
-      return LS_GENERIC_ERROR(errno);
+      return LS_GENERIC_ERROR(ERRNO());
     } else {
       local_point_.from_raw_struct(addr_info);
     }
@@ -221,21 +221,21 @@ light::utils::ErrorCode Socket::get_local_endpoint(INetEndPoint &endpoint) {
 }
 
 //---------------for TcpSocket
-light::utils::ErrorCode TcpSocket::accept(TcpSocket &client_socket) {
+std::error_code TcpSocket::accept(TcpSocket &client_socket) {
   return accept(client_socket.sockfd_);
 }
-light::utils::ErrorCode TcpSocket::accept(int &fd) {
-  light::utils::ErrorCode ec;
+std::error_code TcpSocket::accept(int &fd) {
+  std::error_code ec;
   int ret = ::accept(this->sockfd_, nullptr, nullptr);
   if (ret <= 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
     return ec;
   }
   fd = ret;
   return ec;
 }
-light::utils::ErrorCode TcpSocket::set_keepalive() {
-  light::utils::ErrorCode ec;
+std::error_code TcpSocket::set_keepalive() {
+  std::error_code ec;
 #ifdef WIN32
   char optval = 1;
 #else
@@ -243,7 +243,7 @@ light::utils::ErrorCode TcpSocket::set_keepalive() {
 #endif
   if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, &optval,
                  sizeof(optval)) != 0) {
-    ec = LS_GENERIC_ERROR(errno);
+    ec = LS_GENERIC_ERROR(ERRNO());
   }
   return ec;
 }

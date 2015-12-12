@@ -16,14 +16,14 @@ public:
 
   virtual ~KqueuePoller();
 
-  light::utils::ErrorCode
+  std::error_code
   poll(int timeout, std::unordered_map<int, Dispatcher *> &active_dispatchers);
 
-  light::utils::ErrorCode add_dispatcher(Dispatcher &dispatcher);
+  std::error_code add_dispatcher(Dispatcher &dispatcher);
 
-  light::utils::ErrorCode remove_dispatcher(Dispatcher &dispatcher);
+  std::error_code remove_dispatcher(Dispatcher &dispatcher);
 
-  light::utils::ErrorCode update_dispatcher(Dispatcher &dispatcher);
+  std::error_code update_dispatcher(Dispatcher &dispatcher);
 
 private:
   int kqueuefd_;

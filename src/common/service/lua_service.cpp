@@ -9,7 +9,7 @@ LuaService::LuaService(light::core::Context &ctx) : Service(ctx), ctx_(&ctx) {}
 
 LuaService::~LuaService() {}
 
-light::utils::ErrorCode
+std::error_code
 LuaService::install_new_handler(light::core::Context &ctx, const std::string &file,
                                 const std::string &iname,
                                 const std::string &args) {
@@ -24,9 +24,9 @@ LuaService::install_new_handler(light::core::Context &ctx, const std::string &fi
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode LuaService::init() { return LS_OK_ERROR(); }
+std::error_code LuaService::init() { return LS_OK_ERROR(); }
 
-light::utils::ErrorCode LuaService::fini() { return LS_OK_ERROR(); }
+std::error_code LuaService::fini() { return LS_OK_ERROR(); }
 } /* ha */
 
 } /* li */

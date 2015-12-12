@@ -4,21 +4,21 @@
 namespace light {
 namespace network {
 
-light::utils::ErrorCode Dispatcher::attach(Looper &looper) {
+std::error_code Dispatcher::attach(Looper &looper) {
   if (attached_)
     return LS_OK_ERROR();
   this->looper_ = &looper;
   this->attached_ = true;
   return looper_->add_dispatcher(*this);
 }
-light::utils::ErrorCode Dispatcher::detach() {
+std::error_code Dispatcher::detach() {
   if (!attached_)
     return LS_OK_ERROR();
   this->attached_ = false;
   return looper_->remove_dispatcher(*this);
 }
 
-light::utils::ErrorCode Dispatcher::reattach() {
+std::error_code Dispatcher::reattach() {
   if (attached_) {
     return looper_->update_dispatcher(*this);
   } else {
@@ -26,7 +26,7 @@ light::utils::ErrorCode Dispatcher::reattach() {
   }
 }
 
-light::utils::ErrorCode Dispatcher::attach() { return attach(*looper_); }
+std::error_code Dispatcher::attach() { return attach(*looper_); }
 void Dispatcher::set_poll_event_data(bool r, bool w, bool e, bool c) {
   poll_events_.read = r;
   poll_events_.write = w;

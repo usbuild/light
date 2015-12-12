@@ -15,7 +15,7 @@ using namespace light::network;
 using namespace std::placeholders;
 
 TEST(Socket, demo) { /*{{{*/
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   light::network::TcpSocket socket(
       INetEndPoint(light::network::protocol::v4(), 0));
   socket.set_reuseaddr(1);
@@ -36,7 +36,7 @@ public:
   EchoConnection(Looper &looper, int fd)
       : looper_(nullptr), conn_(new TcpConnection(looper, fd)), close_(false) {}
 
-  void handle(const light::utils::ErrorCode &ec, size_t bytes_transferred) {
+  void handle(const std::error_code &ec, size_t bytes_transferred) {
     UNUSED(bytes_transferred);
     if (!ec) {
       ::memcpy(wbuf_, rbuf_, 1024);
@@ -79,7 +79,7 @@ TEST(Acceptor, accept) { /*{{{*/
   acceptor.bind(endpoint);
   acceptor.listen();
 
-  acceptor.set_accept_handler([&looper](light::utils::ErrorCode &ec, int fd) {
+  acceptor.set_accept_handler([&looper](std::error_code &ec, int fd) {
     UNUSED(ec);
     DLOG(INFO) << "get client: " << fd;
     (new EchoConnection(looper, fd))->run();
@@ -100,8 +100,8 @@ TEST(TcpClient, accept) { /*{{{*/
   tcp_client.async_connect(
       INetEndPoint("93.184.216.34", 80),
       [&tcp_client, &looper, buf, wbuf,
-       &conn](const light::utils::ErrorCode &ec) {
-        DLOG(INFO) << ec.message();
+       &conn](const std::error_code &ec) {
+        DLOG(INFO) << ec.message() << "  message  " << ec.value();
         if (!ec) {
           conn = new TcpConnection(looper, tcp_client.get_sockfd());
           std::string hello("GET / HTTP/1.1\r\n"
@@ -112,7 +112,7 @@ TEST(TcpClient, accept) { /*{{{*/
           conn->async_write(wbuf, hello.size(), [] { EXPECT_TRUE(true); });
           ::memset(buf, 0, 1025);
           conn->async_read_some(
-              buf, 1024, [buf, &looper, conn, wbuf](const light::utils::ErrorCode &ec,
+              buf, 1024, [buf, &looper, conn, wbuf](const std::error_code &ec,
                                         int bytes_transferred) {
                 DLOG(INFO) << ec.message();
                 UNUSED(ec);
@@ -135,7 +135,7 @@ TEST(TcpClient, accept) { /*{{{*/
 
 TEST(Looper, demo) { /*{{{*/
   Looper looper;
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   int i = 0;
   uintptr_t timer_id = 0;
 

@@ -49,7 +49,7 @@ NetworkService::~NetworkService() {
 	DLOG(INFO) << __FUNCTION__ << " " << this;
 }
 
-light::utils::ErrorCode NetworkService::init() {
+std::error_code NetworkService::init() {
   if (enet_initialize() != 0) {
     DLOG(FATAL) << "An error occured while initializing ENet";
     return LS_MISC_ERR_OBJ(unknown);
@@ -119,7 +119,7 @@ void NetworkService::forward_data_message(
 
 void NetworkService::forward_error_message(
     NetworkServiceMessageType type, uint32_t opaque, uint32_t handle,
-    const light::utils::ErrorCode &ec,
+    const std::error_code &ec,
     const light::network::INetEndPoint &peer) {
   NetworkServiceMessage msg;
   msg.type = type;
@@ -169,7 +169,7 @@ void NetworkService::on_connect(uint32_t handle, ENetHost &host,
     connect_callbacks_.erase(peer);
 
     // remove timeout timer
-    light::utils::ErrorCode ec;
+    std::error_code ec;
     get_looper().cancel_timer(ec, timer_id);
     if (ec) {
       DLOG(INFO) << "failed to remove timer: " << ec.message();
@@ -223,7 +223,7 @@ void NetworkService::on_disconnect(uint32_t handle, ENetHost &host,
   }
 }
 
-light::utils::ErrorCode NetworkService::fini() {
+std::error_code NetworkService::fini() {
   enet_deinitialize();
   if (loop_idx_) {
     get_looper().unregister_loop_callback(loop_idx_);
@@ -264,7 +264,7 @@ void NetworkService::create_tcp_server(
   key |= (CONN_TYPE_TCP_SERVER << CONN_TYPE_SHIFT);
   acceptor_map_[key] = ConnectionContainer<light::network::Acceptor>(acceptor, opaque);
   acceptor->set_accept_handler(
-      [this, opaque](const light::utils::ErrorCode &aec, int fd) {
+      [this, opaque](const std::error_code &aec, int fd) {
         if (!aec) {
           uint32_t tcp_key;
           light::network::TcpConnection *conn;
@@ -323,7 +323,7 @@ void NetworkService::async_read_tcp_connection(
 
   conn->async_read_some(
       buf_ptr.get(), fixed_alloc_.node_size(),
-      [this, conn, handle, buf_ptr](light::utils::ErrorCode ec, size_t bytes_read) {
+      [this, conn, handle, buf_ptr](std::error_code ec, size_t bytes_read) {
 				char *buf = buf_ptr.get();
         if (!ec) {
           CommonPacket pkt;
@@ -341,7 +341,7 @@ void NetworkService::async_read_tcp_connection(
 }
 
 void NetworkService::handle_tcp_error(uint32_t handle,
-                                      const light::utils::ErrorCode &ec) {
+                                      const std::error_code &ec) {
   auto conn = tcp_connection_map_[handle];
   forward_error_message(NetworkServiceMessageType::NET_MSG_TYPE_EXECPTION,
                         conn.opaque, handle, ec,
@@ -388,7 +388,7 @@ void NetworkService::connect_tcp_server(
   }
   tcp_client->async_connect(
       point,
-      [this, tcp_client, func, opaque](const light::utils::ErrorCode &ec) {
+      [this, tcp_client, func, opaque](const std::error_code &ec) {
 				uint32_t key = 0;
         if (!ec) {
           light::network::TcpConnection *conn;
@@ -444,7 +444,7 @@ void NetworkService::connect_udp_server(
   if (peer == nullptr) {
     func(LS_GENERIC_ERR_OBJ(too_many_files_open), 0);
   }
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   auto tid = get_looper().add_timer(ec, micro_sec, 0, [peer, this]() {
     auto it = connect_callbacks_.find(peer);
     if (it == connect_callbacks_.end()) {

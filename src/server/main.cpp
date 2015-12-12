@@ -14,7 +14,7 @@ int main(int argc, const char *argv[]) {
   acceptor.bind(endpoint);
   acceptor.listen();
 
-  acceptor.set_accept_handler([&looper](light::utils::ErrorCode &ec, int fd) {
+  acceptor.set_accept_handler([&looper](std::error_code &ec, int fd) {
     UNUSED(ec);
     DLOG(INFO) << "get client: " << fd;
   });

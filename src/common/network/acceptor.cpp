@@ -7,7 +7,7 @@ Acceptor::Acceptor(Looper &looper)
 
 Acceptor::~Acceptor() {}
 
-light::utils::ErrorCode Acceptor::open(const protocol::All &v) {
+std::error_code Acceptor::open(const protocol::All &v) {
   auto ec = TcpSocket::open(v);
   if (ec)
     return ec;

@@ -47,7 +47,7 @@ public:
         args_(args) {}
   virtual ~LuaHandler() {}
 
-  light::utils::ErrorCode init() override {
+  std::error_code init() override {
     if (!lua_ctx_) {
       return LS_GENERIC_ERR_OBJ(not_enough_memory);
     }

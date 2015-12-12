@@ -37,10 +37,10 @@ public:
   }
 
 
-  light::utils::ErrorCode add_handler(const std::string &name,
+  std::error_code add_handler(const std::string &name,
     std::shared_ptr<MessageHandler> handler);
 
-  light::utils::ErrorCode add_service(const std::string &name,
+  std::error_code add_service(const std::string &name,
     std::shared_ptr<Service> service);
 
   std::shared_ptr<MessageHandler> get_handler(const std::string &name);

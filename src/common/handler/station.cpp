@@ -19,13 +19,13 @@ Station::Station(uint8_t station_id,
 
 Station::~Station() {}
 
-light::utils::ErrorCode Station::init() { return LS_OK_ERROR(); }
+std::error_code Station::init() { return LS_OK_ERROR(); }
 
 void Station::on_install() {
   using ns_t = light::service::NetworkService;
   network_service_->post<ns_t>(
       &ns_t::create_tcp_server, endpoint_, 5,
-      ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
+      ctx_->get_looper().wrap([this](std::error_code ec,
                                      uint32_t handle) {
         UNUSED(handle);
         if (ec) {
@@ -43,7 +43,7 @@ void Station::connect_to_station(const light::network::INetEndPoint &point) {
   using ns_t = light::service::NetworkService;
   network_service_->post<ns_t>(
       &ns_t::connect_tcp_server, point, 5000000LL,
-      ctx_->get_looper().wrap([this, point](light::utils::ErrorCode ec,
+      ctx_->get_looper().wrap([this, point](std::error_code ec,
                                             uint32_t handle) {
         UNUSED(handle);
         if (!ec) {

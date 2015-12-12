@@ -25,7 +25,7 @@ public:
 
   void buffer_write_callback();
 
-  light::utils::ErrorCode close();
+  std::error_code close();
 
   template <typename T> void set_error_callback(T &&t);
 
@@ -39,7 +39,7 @@ public:
 
   void async_write(void *buf, size_t len, const write_callback_t &func);
 
-  light::utils::ErrorCode
+  std::error_code
   get_peer_endpoint(light::network::INetEndPoint &endpoint);
 
 protected:
@@ -68,10 +68,10 @@ void TcpConnection::async_read(void *read_buf, size_t bytes_to_read,
         ::recv(this->sockfd_, static_cast<char *>(read_buf) + bytes_has_read_,
                bytes_left, 0);
     if (read_bytes < 0) {
-      if (errno == EAGAIN || errno == EWOULDBLOCK) {
+      if (ERRNO() == EAGAIN || ERRNO() == EWOULDBLOCK) {
 
       } else {
-        LOG(WARNING) << "read failed: " << LS_GENERIC_ERROR(errno).message();
+        LOG(WARNING) << "read failed: " << LS_GENERIC_ERROR(ERRNO()).message();
       }
     } else if (read_bytes == 0) {
       dispatcher_->disable_read();
@@ -96,7 +96,7 @@ void TcpConnection::async_read_some(void *read_buf, size_t buf_len,
         ::recv(this->sockfd_, static_cast<char *>(read_buf), buf_len, 0);
     dispatcher_->disable_read();
     if (read_bytes < 0) {
-      cb(LS_GENERIC_ERROR(errno), 0);
+      cb(LS_GENERIC_ERROR(ERRNO()), 0);
     } else if (read_bytes == 0) {
       cb(LS_MISC_ERR_OBJ(eof), 0);
     } else {

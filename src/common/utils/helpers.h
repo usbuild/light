@@ -7,7 +7,7 @@ namespace light {
 namespace utils {
 int set_nonblocking(int fd);
 
-light::utils::ErrorCode check_socket_error(int fd);
+std::error_code check_socket_error(int fd);
 
 class ScopeExit {
 public:

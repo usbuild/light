@@ -81,7 +81,7 @@ public:
           network_service_ptr_t network_service);
   ~Station();
 
-  light::utils::ErrorCode init() override;
+  std::error_code init() override;
   void on_install() override;
   void post_message(light::core::light_message_ptr_t msg) override;
   void on_unstall() override;

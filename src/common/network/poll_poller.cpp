@@ -14,7 +14,7 @@ PollPoller::PollPoller(Looper &looper) : Poller(looper) {}
 PollPoller::~PollPoller() {}
 
 // millisecs
-light::utils::ErrorCode
+std::error_code
 PollPoller::poll(int timeout,
                    std::unordered_map<int, Dispatcher *> &active_dispatchers) {
 
@@ -25,7 +25,7 @@ PollPoller::poll(int timeout,
   int num_events = ::WSAPoll(&*fds_.begin(), fds_.size(), timeout);
 
   if (num_events < 0) {
-    if (errno == EINTR) {
+    if (ERRNO() == EINTR) {
       return LS_OK_ERROR();
     }
   } else if (num_events == 0) {
@@ -46,7 +46,7 @@ PollPoller::poll(int timeout,
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode PollPoller::add_dispatcher(Dispatcher &dispatcher) {
+std::error_code PollPoller::add_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) == dispatchers_.end());
   int sock = dispatcher.get_fd();
 
@@ -68,7 +68,7 @@ light::utils::ErrorCode PollPoller::add_dispatcher(Dispatcher &dispatcher) {
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode
+std::error_code
 PollPoller::remove_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
 
@@ -88,7 +88,7 @@ PollPoller::remove_dispatcher(Dispatcher &dispatcher) {
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode
+std::error_code
 PollPoller::update_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
   int sock = dispatcher.get_fd();

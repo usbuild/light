@@ -7,18 +7,18 @@ namespace network {
 EpollPoller::EpollPoller(Looper &looper) : Poller(looper), epollfd_(0) {
   if ((this->epollfd_ = epoll_create1(EPOLL_CLOEXEC)) == -1) {
     this->epollfd_ = 0;
-    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
+    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
   }
 }
 
 EpollPoller::~EpollPoller() {}
 
-light::utils::ErrorCode
+std::error_code
 EpollPoller::poll(int timeout,
                   std::unordered_map<int, Dispatcher *> &active_dispatchers) {
   int num_events = ::epoll_wait(epollfd_, events_, MAX_LOOPER_EVENTS, timeout);
   if (num_events < 0) {
-    if (errno == EINTR) {
+    if (ERRNO() == EINTR) {
       return LS_OK_ERROR();
     }
   } else if (num_events == 0) {
@@ -45,7 +45,7 @@ EpollPoller::poll(int timeout,
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode EpollPoller::add_dispatcher(Dispatcher &dispatcher) {
+std::error_code EpollPoller::add_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) == dispatchers_.end());
 
   struct epoll_event ev;
@@ -56,24 +56,24 @@ light::utils::ErrorCode EpollPoller::add_dispatcher(Dispatcher &dispatcher) {
     ev.events |= EPOLLOUT;
   ev.data.ptr = &dispatcher;
   if (::epoll_ctl(epollfd_, EPOLL_CTL_ADD, dispatcher.get_fd(), &ev) == -1) {
-    return LS_GENERIC_ERROR(errno);
+    return LS_GENERIC_ERROR(ERRNO());
   }
   dispatchers_[dispatcher.get_fd()] = &dispatcher;
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode EpollPoller::remove_dispatcher(Dispatcher &dispatcher) {
+std::error_code EpollPoller::remove_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
 
   struct epoll_event ev;
   if (::epoll_ctl(epollfd_, EPOLL_CTL_DEL, dispatcher.get_fd(), &ev) == -1) {
-    return LS_GENERIC_ERROR(errno);
+    return LS_GENERIC_ERROR(ERRNO());
   }
   dispatchers_.erase(dispatcher.get_fd());
   return LS_OK_ERROR();
 }
 
-light::utils::ErrorCode EpollPoller::update_dispatcher(Dispatcher &dispatcher) {
+std::error_code EpollPoller::update_dispatcher(Dispatcher &dispatcher) {
   assert(dispatchers_.find(dispatcher.get_fd()) != dispatchers_.end());
   struct epoll_event ev;
   ev.events = 0;
@@ -83,7 +83,7 @@ light::utils::ErrorCode EpollPoller::update_dispatcher(Dispatcher &dispatcher) {
     ev.events |= EPOLLOUT;
   ev.data.ptr = &dispatcher;
   if (::epoll_ctl(epollfd_, EPOLL_CTL_MOD, dispatcher.get_fd(), &ev) == -1) {
-    return LS_GENERIC_ERROR(errno);
+    return LS_GENERIC_ERROR(ERRNO());
   }
   return LS_OK_ERROR();
 }

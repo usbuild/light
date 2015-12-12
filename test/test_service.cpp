@@ -12,7 +12,7 @@ public:
   Shuttle(std::shared_ptr<NetworkService> ns) : MessageHandler(), ns_(ns) {
 	}
 
-  virtual light::utils::ErrorCode init() {
+  virtual std::error_code init() {
     DLOG(INFO) << "shuttle inited!";
     return LS_OK_ERROR();
   }
@@ -23,20 +23,20 @@ public:
 #if 1
     ns_->post<NetworkService>(
         &NetworkService::create_udp_server, INetEndPoint(protocol::v4(), 8889),
-        5, 16, ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
+        5, 16, ctx_->get_looper().wrap([this](std::error_code ec,
                                               uint32_t handle) {
           UNUSED(handle);
           DLOG(INFO) << "create udp server " << ec.message();
           ns_->post<NetworkService>(
               &NetworkService::create_udp_stub, 10, 16,
-              ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
+              ctx_->get_looper().wrap([this](std::error_code ec,
                                              uint32_t stub_id) {
                 DLOG(INFO) << "create udp client stub " << ec.message() << " "
                            << stub_id;
                 ns_->post<NetworkService>(
                     &NetworkService::connect_udp_server,
                     INetEndPoint("127.0.0.1", 8889), 5000000LL, stub_id, 8,
-                    ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
+                    ctx_->get_looper().wrap([this](std::error_code ec,
                                                    uint32_t handle) {
                       DLOG(INFO) << "connect_udp_server " << ec.message();
                       CommonPacket pkt;
@@ -49,7 +49,7 @@ public:
                       DLOG(INFO) << "send udp packet " << handle;
                       ns_->post<NetworkService>(
                           &NetworkService::send_common_packet, pkt, true, 0);
-                      light::utils::ErrorCode ec2;
+                      std::error_code ec2;
                       ns_->get_looper().add_timer(
                           ec2, 1000000LL, 0, [this, handle] {
                             ns_->post<NetworkService>(&NetworkService::close,
@@ -66,14 +66,14 @@ public:
 #if 1
     ns_->post<NetworkService>(
         &NetworkService::create_tcp_server, INetEndPoint(protocol::v4(), 8890),
-        5, ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
+        5, ctx_->get_looper().wrap([this](std::error_code ec,
                                           uint32_t handle) {
           UNUSED(handle);
           DLOG(INFO) << "create tcp server " << ec.message();
           ns_->post<NetworkService>(
               &NetworkService::connect_tcp_server,
               INetEndPoint("127.0.0.1", 8890), 5000000LL,
-              ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
+              ctx_->get_looper().wrap([this](std::error_code ec,
                                              uint32_t handle) {
                 DLOG(INFO) << "connect_tcp_server " << ec.message() << " handle " << handle;
                 CommonPacket pkt;
@@ -136,7 +136,7 @@ TEST(Service, demo) {
   ctx.install_handler(shuttle);
   shuttle.init();
 
-  light::utils::ErrorCode ec;
+  std::error_code ec;
   ctx.get_looper().add_timer(ec, 5000000LL, 0,
                              [&ctx] { ctx.get_looper().stop(); });
 	ctx.get_looper().loop();
