@@ -9,10 +9,10 @@ Acceptor::~Acceptor() {}
 
 light::utils::ErrorCode Acceptor::open(const protocol::All &v) {
   auto ec = TcpSocket::open(v);
-  if (!ec.ok())
+  if (ec)
     return ec;
   ec = TcpSocket::set_nonblocking();
-  if (!ec.ok())
+  if (ec)
     return ec;
   dispatcher_.reset(new Dispatcher(*looper_, this->sockfd_));
   return LS_OK_ERROR();

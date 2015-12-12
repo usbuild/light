@@ -13,10 +13,10 @@ TcpClient::~TcpClient() {
 
 light::utils::ErrorCode TcpClient::open(const protocol::All &v) {
   auto ec = TcpSocket::open(v);
-  if (!ec.ok())
+  if (ec)
     return ec;
   ec = TcpSocket::set_nonblocking();
-  if (!ec.ok())
+  if (ec)
     return ec;
   return LS_OK_ERROR();
 }

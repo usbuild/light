@@ -28,7 +28,7 @@ void Station::on_install() {
       ctx_->get_looper().wrap([this](light::utils::ErrorCode ec,
                                      uint32_t handle) {
         UNUSED(handle);
-        if (!ec.ok()) {
+        if (ec) {
           HANDLER_LOG(INFO)
               << "unable to create tcp server, will exit or restart";
         } else {
@@ -46,7 +46,7 @@ void Station::connect_to_station(const light::network::INetEndPoint &point) {
       ctx_->get_looper().wrap([this, point](light::utils::ErrorCode ec,
                                             uint32_t handle) {
         UNUSED(handle);
-        if (ec.ok()) {
+        if (!ec) {
           HANDLER_LOG(INFO) << "connect: " << point.to_string() << ":"
                             << point.get_port() << " " << ec.message();
         } else {

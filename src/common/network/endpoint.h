@@ -25,6 +25,7 @@
 #include <memory>
 #include <stdint.h>
 #include <string>
+#include <string.h>
 #include "utils/error_code.h"
 #include "utils/exception.h"
 #include "utils/noncopyable.h"

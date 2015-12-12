@@ -31,8 +31,10 @@ void TcpClient::async_connect(const INetEndPoint &point,
                               const ConnectHandler &on_connect,
                               uint64_t timeout) {
   auto ec = TcpSocket::connect(point);
-  if (ec == LS_GENERIC_ERR_OBJ(in_progress) ||
-      ec.error_code() == ERRNO(EWOULDBLOCK)) {
+  if (ec == LS_GENERIC_ERR_OBJ(operation_in_progress) ||
+      ec == LS_GENERIC_ERR_OBJ(operation_would_block) ||
+      ec == LS_GENERIC_ERR_OBJ(resource_unavailable_try_again)
+    ) {
     dispatcher_.reset(new Dispatcher(*looper_, this->sockfd_));
 
     auto timer_id = looper_->add_timer(ec, timeout, 0, [this, on_connect] {

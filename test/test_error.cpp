@@ -38,7 +38,7 @@ public:
 
   void handle(const light::utils::ErrorCode &ec, size_t bytes_transferred) {
     UNUSED(bytes_transferred);
-    if (ec.ok()) {
+    if (!ec) {
       ::memcpy(wbuf_, rbuf_, 1024);
       conn_->async_write(wbuf_, strlen(static_cast<char *>(wbuf_)) + 1,
                          []() {});
@@ -102,7 +102,7 @@ TEST(TcpClient, accept) { /*{{{*/
       [&tcp_client, &looper, buf, wbuf,
        &conn](const light::utils::ErrorCode &ec) {
         DLOG(INFO) << ec.message();
-        if (ec.ok()) {
+        if (!ec) {
           conn = new TcpConnection(looper, tcp_client.get_sockfd());
           std::string hello("GET / HTTP/1.1\r\n"
                             "User-Agent: curl/7.26.0\r\n"

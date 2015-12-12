@@ -1,4 +1,7 @@
 #include "network/endpoint.h"
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
 #include "utils/helpers.h"
 using namespace light;
 using namespace light::network;
@@ -8,7 +11,7 @@ namespace network {
 
 INetEndPointIpV4::INetEndPointIpV4(const std::string &ip, int port) {
   auto ec = this->parse_from_ip_port(ip, port);
-  if (!ec.ok()) {
+  if (ec) {
     throw light::exception::SocketException(ec);
   }
 }
@@ -59,7 +62,7 @@ sa_family_t INetEndPoint::get_ip_version(const std::string &ip,
 
 INetEndPointIpV6::INetEndPointIpV6(const std::string &ip, int port) {
   auto ec = this->parse_from_ip_port(ip, port);
-  if (!ec.ok()) {
+  if (ec) {
     throw light::exception::SocketException(ec);
   }
 }
@@ -95,7 +98,7 @@ void INetEndPointIpV6::from_raw_struct(struct sockaddr_in6 *addr) {
 INetEndPoint::INetEndPoint(const protocol::V4 &v4, int port) {
   UNUSED(v4);
   auto ec = addr_.ipv4.parse_from_ip_port("", port);
-  if (!ec.ok())
+  if (ec)
     throw light::exception::SocketException(ec);
   family_ = AF_INET;
 }
@@ -103,7 +106,7 @@ INetEndPoint::INetEndPoint(const protocol::V4 &v4, int port) {
 INetEndPoint::INetEndPoint(const protocol::V6 &v6, int port) {
   UNUSED(v6);
   auto ec = addr_.ipv6.parse_from_ip_port("", port);
-  if (!ec.ok())
+  if (ec)
     throw light::exception::SocketException(ec);
   family_ = AF_INET6;
 }
@@ -111,7 +114,7 @@ INetEndPoint::INetEndPoint(const protocol::V6 &v6, int port) {
 INetEndPoint::INetEndPoint(const std::string &ip, int port) {
   light::utils::ErrorCode ec;
   *this = INetEndPoint::parse_from_ip_port(ec, ip, port);
-  if (!ec.ok())
+  if (ec)
     throw light::exception::SocketException(ec);
 }
 
@@ -178,24 +181,24 @@ INetEndPoint INetEndPoint::parse_from_ip_port(light::utils::ErrorCode &ec,
                                               const std::string &ip, int port) {
   INetEndPoint ret;
   auto ver = INetEndPoint::get_ip_version(ip, ec);
-  if (!ec.ok()) {
+  if (ec) {
     return ret;
   }
   if (ver == AF_INET) {
     auto endpoint = INetEndPointIpV4();
     ec = endpoint.parse_from_ip_port(ip, port);
-    if (ec.ok()) {
+    if (!ec) {
       ret = endpoint;
     }
 
   } else if (ver == AF_INET6) {
     auto endpoint = INetEndPointIpV6();
     ec = endpoint.parse_from_ip_port(ip, port);
-    if (ec.ok()) {
+    if (!ec) {
       ret = endpoint;
     };
   } else {
-    ec = light::utils::generic_errors::basic::address_family_not_supported;
+    ec = LS_GENERIC_ERR_OBJ(address_family_not_supported);
   }
   return ret;
 }

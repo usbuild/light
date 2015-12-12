@@ -9,7 +9,7 @@ TcpConnection::TcpConnection(Looper &looper, int fd)
     : TcpSocket(fd), Connection(looper), write_buffer_(), bytes_has_read_(0) {
   dispatcher_.reset(new Dispatcher(looper, fd));
   auto ec = this->set_nonblocking();
-  if (!ec.ok())
+  if (ec)
     throw light::exception::SocketException(ec);
   dispatcher_->set_write_callback(
       std::bind(&TcpConnection::buffer_write_callback, this));

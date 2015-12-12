@@ -31,7 +31,7 @@ Looper::Looper()
   }
   timer_dispatcher_.reset(new Dispatcher(*this, timerfd));
   ec = timer_dispatcher_->attach();
-  if (!ec.ok())
+  if (ec)
     throw light::exception::EventException(ec);
   // set timer callback
   timer_dispatcher_->enable_read();
@@ -73,7 +73,7 @@ Looper::Looper()
   eventfd = pipes[0];
 
   ec = event_dispatcher_->attach();
-  if (!ec.ok())
+  if (ec)
     throw light::exception::EventException(ec);
 
   event_dispatcher_->enable_read();
@@ -187,7 +187,7 @@ void Looper::loop() {
         post_functors_.push_back([disp]() { disp->handle_events(); });
       }
 
-      if (!ec.ok()) {
+      if (ec) {
         throw light::exception::EventException(ec);
       }
       // waik up other threads

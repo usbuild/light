@@ -23,7 +23,7 @@ public:
         return nullptr;
       }
       auto ec = t->init();
-      if (!ec.ok()) {
+      if (ec) {
         DLOG(FATAL) << "handler init failed: " << ec.message();
         return nullptr;
       }
@@ -49,7 +49,7 @@ public:
         return nullptr;
       }
       auto ec = t->init();
-      if (!ec.ok()) {
+      if (ec) {
         DLOG(FATAL) << "handler init failed: " << ec.message();
         return nullptr;
       }

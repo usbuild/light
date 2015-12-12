@@ -35,14 +35,14 @@ SocketOps::open_and_bind(int &fd, const INetEndPoint &endpoint) const {
     ec = this->open(fd, protocol::V6());
   }
 
-  if (!ec.ok())
+  if (ec)
     return ec;
 
   ec = this->bind(fd, endpoint);
 
-  if (!ec.ok()) {
+  if (ec) {
     auto cec = this->close(fd);
-    if (!cec.ok()) {
+    if (cec) {
       return cec;
     }
   }
@@ -83,7 +83,7 @@ light::utils::ErrorCode SocketOps::close(int &fd) const {
   if (!fd)
     return ec;
   if (socketclose(fd) != 0) {
-    ec = errno;
+    ec = LS_GENERIC_ERROR(errno);
   } else {
     fd = 0;
   }
@@ -155,14 +155,14 @@ Socket::Socket(const SocketOps &ops, const INetEndPoint &endpoint)
     : Socket(Socket::tcp_ops()) {
   UNUSED(ops);
   auto ec = ops_->open_and_bind(sockfd_, endpoint);
-  if (!ec.ok())
+  if (ec)
     throw light::exception::SocketException(ec);
 }
 
 light::utils::ErrorCode Socket::set_nonblocking() {
   light::utils::ErrorCode ec;
   if (light::utils::set_nonblocking(this->sockfd_) != 0) {
-    ec = errno;
+    ec = LS_GENERIC_ERROR(errno);
   }
   return ec;
 }
@@ -176,7 +176,7 @@ light::utils::ErrorCode Socket::set_reuseaddr(int enable) {
 #endif
   if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval,
                  sizeof(optval)) != 0) {
-    ec = errno;
+    ec = LS_GENERIC_ERROR(errno);
   }
   return ec;
 }
@@ -243,7 +243,7 @@ light::utils::ErrorCode TcpSocket::set_keepalive() {
 #endif
   if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, &optval,
                  sizeof(optval)) != 0) {
-    ec = errno;
+    ec = LS_GENERIC_ERROR(errno);
   }
   return ec;
 }

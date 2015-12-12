@@ -27,7 +27,7 @@ static light::network::INetEndPoint
 get_tcp_peer_endpoint(light::network::TcpConnection *conn) {
   light::network::INetEndPoint point;
   auto iec = conn->get_peer_endpoint(point);
-  if (!iec.ok()) {
+  if (iec) {
     DLOG(INFO) << "failed to get peer address Error:" << iec.message();
   }
   return point;
@@ -171,7 +171,7 @@ void NetworkService::on_connect(uint32_t handle, ENetHost &host,
     // remove timeout timer
     light::utils::ErrorCode ec;
     get_looper().cancel_timer(ec, timer_id);
-    if (!ec.ok()) {
+    if (ec) {
       DLOG(INFO) << "failed to remove timer: " << ec.message();
     }
   } else {
@@ -248,16 +248,16 @@ void NetworkService::create_tcp_server(
 	});
       
   auto ec = acceptor->open(endpoint.get_protocol());
-  if (!ec.ok())
+  if (ec)
     func(ec, 0);
   ec = acceptor->set_reuseaddr(1);
-  if (!ec.ok())
+  if (ec)
     func(ec, 0);
   ec = acceptor->bind(endpoint);
-  if (!ec.ok())
+  if (ec)
     func(ec, 0);
   ec = acceptor->listen(backlog);
-  if (!ec.ok())
+  if (ec)
     func(ec, 0);
 
   uint32_t key = ++last_socket_id_;
@@ -265,7 +265,7 @@ void NetworkService::create_tcp_server(
   acceptor_map_[key] = ConnectionContainer<light::network::Acceptor>(acceptor, opaque);
   acceptor->set_accept_handler(
       [this, opaque](const light::utils::ErrorCode &aec, int fd) {
-        if (aec.ok()) {
+        if (!aec) {
           uint32_t tcp_key;
           light::network::TcpConnection *conn;
           std::tie(tcp_key, conn) = install_tcp_connection(fd, opaque);
@@ -325,7 +325,7 @@ void NetworkService::async_read_tcp_connection(
       buf_ptr.get(), fixed_alloc_.node_size(),
       [this, conn, handle, buf_ptr](light::utils::ErrorCode ec, size_t bytes_read) {
 				char *buf = buf_ptr.get();
-        if (ec.ok()) {
+        if (!ec) {
           CommonPacket pkt;
           pkt.data = buf;
           pkt.size = bytes_read;
@@ -382,7 +382,7 @@ void NetworkService::connect_tcp_server(
 	auto tcp_client = 
       new light::network::TcpClient(get_looper());
   auto tmp_ec = tcp_client->open(point.get_protocol());
-  if (!tmp_ec.ok()) {
+  if (tmp_ec) {
     func(tmp_ec, 0);
     return;
   }
@@ -390,7 +390,7 @@ void NetworkService::connect_tcp_server(
       point,
       [this, tcp_client, func, opaque](const light::utils::ErrorCode &ec) {
 				uint32_t key = 0;
-        if (ec.ok()) {
+        if (!ec) {
           light::network::TcpConnection *conn;
           std::tie(key, conn) =
               install_tcp_connection(tcp_client->get_sockfd(), opaque);
@@ -455,7 +455,7 @@ void NetworkService::connect_udp_server(
     std::get<1>(it->second)(LS_GENERIC_ERR_OBJ(timed_out), 0);
     connect_callbacks_.erase(peer);
   });
-  if (!ec.ok()) {
+  if (ec) {
     func(ec, 0);
   } else {
     connect_callbacks_[peer] = std::make_tuple(tid, func, opaque);
