@@ -1,4 +1,5 @@
 #include "utils/error_code.h"
+#include <string>
 namespace light {
   namespace utils {
     std::error_code make_error_code(error_code_t e) {
