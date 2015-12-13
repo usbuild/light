@@ -27,7 +27,7 @@ Looper::Looper()
   // many cause leap second problem?
   if ((timerfd = ::timerfd_create(CLOCK_REALTIME,
                                   TFD_NONBLOCK | TFD_CLOEXEC)) == -1) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
+    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
   }
   timer_dispatcher_.reset(new Dispatcher(*this, timerfd));
   ec = timer_dispatcher_->attach();
@@ -54,19 +54,19 @@ Looper::Looper()
 
 #ifdef HAVE_EVENTFD
   if ((eventfd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC)) == -1) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
+    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
   }
   event_dispatcher_.reset(new Dispatcher(*this, eventfd));
 #elif defined(HAVE_UNISTD_H)
   int pipes[2];
   if (::pipe(pipes) == -1) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
+    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
   }
   if (light::utils::set_nonblocking(pipes[0]) != 0) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
+    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
   }
   if (light::utils::set_nonblocking(pipes[1]) != 0) {
-    throw light::exception::EventException(LS_GENERIC_ERROR(ERRNO()));
+    throw light::exception::EventException(LS_GENERIC_ERROR(errno));
   }
   event_dispatcher_.reset(new Dispatcher(*this, pipes[0]));
   w_event_dispatcher_.reset(new Dispatcher(*this, pipes[1]));
@@ -139,7 +139,7 @@ std::error_code Looper::update_timerfd_expire() {
   }
   if ((::timerfd_settime(timer_dispatcher_->get_fd(), TFD_TIMER_ABSTIME, &spec,
                          nullptr)) == -1) {
-    return LS_GENERIC_ERROR(ERRNO());
+    return LS_GENERIC_ERROR(errno);
   }
 #endif
   return LS_OK_ERROR();

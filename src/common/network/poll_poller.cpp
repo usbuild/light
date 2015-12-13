@@ -25,7 +25,7 @@ PollPoller::poll(int timeout,
   int num_events = ::WSAPoll(&*fds_.begin(), fds_.size(), timeout);
 
   if (num_events < 0) {
-    if (ERRNO() == EINTR) {
+    if (SOCK_ERRNO() == CERR(EINTR)) {
       return LS_OK_ERROR();
     }
   } else if (num_events == 0) {

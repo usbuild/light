@@ -53,7 +53,7 @@ std::error_code SocketOps::bind(int fd,
                                         const INetEndPoint &endpoint) const {
   std::error_code ec;
   if (::bind(fd, endpoint.get_sock_addr(), endpoint.get_socklen()) < 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   }
   return ec;
 }
@@ -64,7 +64,7 @@ std::error_code SocketOps::connect(int fd,
 
   int ret = ::connect(fd, endpoint.get_sock_addr(), endpoint.get_socklen());
   if (ret != 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   }
   return ec;
 }
@@ -73,7 +73,7 @@ std::error_code SocketOps::listen(int fd, int backlog /*=5*/) const {
   std::error_code ec;
   int ret = ::listen(fd, backlog);
   if (ret == -1) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   }
   return ec;
 }
@@ -83,7 +83,7 @@ std::error_code SocketOps::close(int &fd) const {
   if (!fd)
     return ec;
   if (socketclose(fd) != 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   } else {
     fd = 0;
   }
@@ -97,7 +97,7 @@ std::error_code TcpSocketOps::open(int &sockfd,
   UNUSED(v4);
   std::error_code ec;
   if ((sockfd = ::socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     sockfd = 0;
   }
   return ec;
@@ -109,7 +109,7 @@ std::error_code TcpSocketOps::open(int &sockfd,
   UNUSED(v6);
   std::error_code ec;
   if ((sockfd = ::socket(AF_INET6, SOCK_STREAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     sockfd = 0;
   }
   return ec;
@@ -122,7 +122,7 @@ std::error_code UdpSocketOps::open(int &sockfd,
   UNUSED(v4);
   std::error_code ec;
   if ((sockfd = ::socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     sockfd = 0;
   }
   return ec;
@@ -134,7 +134,7 @@ std::error_code UdpSocketOps::open(int &sockfd,
   UNUSED(v6);
   std::error_code ec;
   if ((sockfd = ::socket(AF_INET6, SOCK_DGRAM, 0)) == -1) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     sockfd = 0;
   }
   return ec;
@@ -162,7 +162,7 @@ Socket::Socket(const SocketOps &ops, const INetEndPoint &endpoint)
 std::error_code Socket::set_nonblocking() {
   std::error_code ec;
   if (light::utils::set_nonblocking(this->sockfd_) != 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   }
   return ec;
 }
@@ -176,21 +176,21 @@ std::error_code Socket::set_reuseaddr(int enable) {
 #endif
   if (setsockopt(this->sockfd_, SOL_SOCKET, SO_REUSEADDR, &optval,
                  sizeof(optval)) != 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   }
   return ec;
 }
 ssize_t Socket::write(std::error_code &ec, const void *buf, size_t len,
                       int flags) {
   ssize_t s = ::send(this->sockfd_, static_cast<const char *>(buf), len, flags);
-  ec = LS_GENERIC_ERROR(ERRNO());
+  ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   return s;
 }
 
 ssize_t Socket::read(std::error_code &ec, void *buf, size_t len,
                      int flags) {
   ssize_t s = ::recv(this->sockfd_, static_cast<char *>(buf), len, flags);
-  ec = LS_GENERIC_ERROR(ERRNO());
+  ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   return s;
 }
 
@@ -211,7 +211,7 @@ std::error_code Socket::get_local_endpoint(INetEndPoint &endpoint) {
     struct sockaddr *addr_info = reinterpret_cast<struct sockaddr *>(&addr);
     int ret = ::getsockname(get_sockfd(), addr_info, &len);
     if (ret != 0) {
-      return LS_GENERIC_ERROR(ERRNO());
+      return LS_GENERIC_ERROR(SOCK_ERRNO());
     } else {
       local_point_.from_raw_struct(addr_info);
     }
@@ -228,7 +228,7 @@ std::error_code TcpSocket::accept(int &fd) {
   std::error_code ec;
   int ret = ::accept(this->sockfd_, nullptr, nullptr);
   if (ret <= 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     return ec;
   }
   fd = ret;
@@ -243,7 +243,7 @@ std::error_code TcpSocket::set_keepalive() {
 #endif
   if (setsockopt(this->sockfd_, SOL_SOCKET, SO_KEEPALIVE, &optval,
                  sizeof(optval)) != 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
   }
   return ec;
 }

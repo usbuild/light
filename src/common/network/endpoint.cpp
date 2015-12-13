@@ -28,7 +28,7 @@ INetEndPointIpV4::parse_from_ip_port(const std::string &ip, int port) {
     addr4_.sin_addr.s_addr = htonl(INADDR_ANY);
   } else {
     if (::inet_pton(AF_INET, ip.c_str(), &(addr4_.sin_addr)) <= 0) {
-      ec = LS_GENERIC_ERROR(ERRNO());
+      ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     }
   }
   addr4_.sin_port = htons(port);
@@ -51,7 +51,7 @@ sa_family_t INetEndPoint::get_ip_version(const std::string &ip,
   hint.ai_flags = AI_NUMERICHOST;
 
   if (getaddrinfo(ip.c_str(), NULL, &hint, &res) != 0) {
-    ec = LS_GENERIC_ERROR(ERRNO());
+    ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     return AF_UNSPEC;
   }
 
@@ -84,7 +84,7 @@ INetEndPointIpV6::parse_from_ip_port(const std::string &ip, int port) {
     addr6_.sin6_addr = in6addr_any;
   } else {
     if (::inet_pton(AF_INET6, ip.c_str(), &addr6_.sin6_addr) <= 0) {
-      ec = LS_GENERIC_ERROR(ERRNO());
+      ec = LS_GENERIC_ERROR(SOCK_ERRNO());
     }
   }
   addr6_.sin6_port = htons(port);

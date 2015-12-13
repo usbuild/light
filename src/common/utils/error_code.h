@@ -25,10 +25,10 @@ ADD_ERROR_CODE_DEF(unknown, "Unknown")
 #include <cerrno>
 
 #ifdef WIN32
-#define ERRNO() (WSAGetLastError())
+#define SOCK_ERRNO() (WSAGetLastError())
 #define CERR(err) WSA##err
 #else
-#define ERRNO() errno
+#define SOCK_ERRNO() errno
 #define CERR(err) err
 #endif
 namespace light {

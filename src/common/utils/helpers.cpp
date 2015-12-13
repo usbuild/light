@@ -33,7 +33,7 @@ std::error_code check_socket_error(int fd) {
   socklen_t len = sizeof(err);
   int i = getsockopt(fd, SOL_SOCKET, SO_ERROR, &err, &len);
   if (i == -1) {
-    return LS_GENERIC_ERROR(ERRNO());
+    return LS_GENERIC_ERROR(SOCK_ERRNO());
   } else if (err != 0) {
     return LS_GENERIC_ERROR(err);
   }

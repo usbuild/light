@@ -68,10 +68,10 @@ void TcpConnection::async_read(void *read_buf, size_t bytes_to_read,
         ::recv(this->sockfd_, static_cast<char *>(read_buf) + bytes_has_read_,
                bytes_left, 0);
     if (read_bytes < 0) {
-      if (ERRNO() == EAGAIN || ERRNO() == EWOULDBLOCK) {
+      if (SOCK_ERRNO() == EAGAIN || SOCK_ERRNO() == CERR(EWOULDBLOCK)) {
 
       } else {
-        LOG(WARNING) << "read failed: " << LS_GENERIC_ERROR(ERRNO()).message();
+        LOG(WARNING) << "read failed: " << LS_GENERIC_ERROR(SOCK_ERRNO()).message();
       }
     } else if (read_bytes == 0) {
       dispatcher_->disable_read();
@@ -96,7 +96,7 @@ void TcpConnection::async_read_some(void *read_buf, size_t buf_len,
         ::recv(this->sockfd_, static_cast<char *>(read_buf), buf_len, 0);
     dispatcher_->disable_read();
     if (read_bytes < 0) {
-      cb(LS_GENERIC_ERROR(ERRNO()), 0);
+      cb(LS_GENERIC_ERROR(SOCK_ERRNO()), 0);
     } else if (read_bytes == 0) {
       cb(LS_MISC_ERR_OBJ(eof), 0);
     } else {

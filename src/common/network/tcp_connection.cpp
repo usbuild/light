@@ -26,10 +26,10 @@ void TcpConnection::buffer_write_callback() {
   auto &vec = write_buffer_.get_iovec();
   ssize_t written = ::writev(get_sockfd(), &vec[0], vec.size());
   if (written < 0) {
-    if (ERRNO() == EAGAIN || ERRNO() == EWOULDBLOCK) {
+    if (SOCK_ERRNO() == EAGAIN || SOCK_ERRNO() == CERR(EWOULDBLOCK)) {
 
     } else {
-      LOG(WARNING) << "write failed: " << LS_GENERIC_ERROR(ERRNO()).message();
+      LOG(WARNING) << "write failed: " << LS_GENERIC_ERROR(SOCK_ERRNO()).message();
     }
   } else {
     write_buffer_.shift(written);
@@ -61,7 +61,7 @@ TcpConnection::get_peer_endpoint(light::network::INetEndPoint &endpoint) {
     struct sockaddr *addr_info = reinterpret_cast<struct sockaddr *>(&addr);
     int ret = ::getpeername(get_sockfd(), addr_info, &len);
     if (ret != 0) {
-      return LS_GENERIC_ERROR(ERRNO());
+      return LS_GENERIC_ERROR(SOCK_ERRNO());
     } else {
       peer_point_.from_raw_struct(addr_info);
     }
